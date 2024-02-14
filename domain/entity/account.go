@@ -54,7 +54,7 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 
 func (a *Account) Deposit(v Money) (*Transaction, error) {
 	if a.Status == AccountStatusCanceled {
-		return nil, NewDepositError("account canceled cant deposit", a.ID, Money(v))
+		return nil, NewDepositError("account canceled cant deposit", a.ID, v)
 	}
 
 	t := factoryDepositTransaction(*a, v)
@@ -65,11 +65,11 @@ func (a *Account) Deposit(v Money) (*Transaction, error) {
 
 func (a *Account) Transfer(payee *Account, v Money) (*TransferOutput, error) {
 	if a.AccountType == Seller {
-		return nil, NewTransferError("account seller cant make transfer", a.ID, Money(v))
+		return nil, NewTransferError("account seller cant make transfer", a.ID, v)
 	}
 
-	if a.Wallet.Balance() < Money(v) {
-		return nil, NewTransferError("insuficient balance", a.ID, Money(v))
+	if a.Wallet.Balance() < v {
+		return nil, NewTransferError("insuficient balance", a.ID, v)
 	}
 
 	t1, t2 := factoryTransferTransactions(*a, *payee, v)
