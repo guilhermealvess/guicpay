@@ -27,3 +27,6 @@ go.work
 
 # Build
 guicpay
+
+# Local test
+m.go

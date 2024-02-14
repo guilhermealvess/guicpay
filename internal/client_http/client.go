@@ -11,6 +11,7 @@ import (
 
 type ClientHttp interface {
 	Send(ctx context.Context, method, url string, query url.Values, bodyJSON json.RawMessage, pathParams ...string) (*http.Response, error)
+	Bind(res *http.Response, v interface{}) error
 }
 
 type clientHttp struct {
