@@ -13,6 +13,7 @@ type AccountRepository interface {
 	FindAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error)
 	FindAccountByIDs(ctx context.Context, ids ...uuid.UUID) (map[uuid.UUID]*entity.Account, error)
 	SaveAtomicTransactions(ctx context.Context, transactions ...entity.Transaction) error
+	FindAll(ctx context.Context) ([]*entity.Account, error)
 }
 
 type Tx interface {

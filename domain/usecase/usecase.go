@@ -11,6 +11,8 @@ type AccountUseCase interface {
 	ExecuteNewAccount(ctx context.Context, input NewAccountInput) (uuid.UUID, error)
 	ExecuteDeposit(ctx context.Context, accountID uuid.UUID, value uint64) (uuid.UUID, error)
 	ExecuteTransfer(ctx context.Context, payer, payee uuid.UUID, value uint64) (uuid.UUID, error)
+	FindByID(ctx context.Context, accountID uuid.UUID) (*AccountOutput, error)
+	FindAll(ctx context.Context) ([]*AccountOutput, error)
 }
 
 type accountUseCase struct {
