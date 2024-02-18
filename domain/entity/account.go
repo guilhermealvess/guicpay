@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,7 +25,7 @@ type Account struct {
 	ID              uuid.UUID
 	AccountType     AccountType
 	CustomerName    string
-	DocumentNUmber  string
+	DocumentNumber  string
 	Email           string
 	PasswordEncoded string
 	Salt            string
@@ -41,7 +42,7 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 		ID:              uuid.New(),
 		AccountType:     t,
 		CustomerName:    name,
-		DocumentNUmber:  doc,
+		DocumentNumber:  doc,
 		Email:           email,
 		PasswordEncoded: pass + pass,
 		PhoneNumber:     phone,
@@ -54,7 +55,7 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 
 func (a *Account) Deposit(v Money) (*Transaction, error) {
 	if a.Status == AccountStatusCanceled {
-		return nil, NewDepositError("account canceled cant deposit", a.ID, v)
+		return nil, errors.Join(ErrUnprocessableEntity, NewDepositError("account canceled cant deposit", a.ID, v))
 	}
 
 	t := factoryDepositTransaction(*a, v)
@@ -65,11 +66,11 @@ func (a *Account) Deposit(v Money) (*Transaction, error) {
 
 func (a *Account) Transfer(payee *Account, v Money) (*TransferOutput, error) {
 	if a.AccountType == Seller {
-		return nil, NewTransferError("account seller cant make transfer", a.ID, v)
+		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("account seller cant make transfer", a.ID, v))
 	}
 
 	if a.Wallet.Balance() < v {
-		return nil, NewTransferError("insuficient balance", a.ID, v)
+		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("insuficient balance", a.ID, v))
 	}
 
 	t1, t2 := factoryTransferTransactions(*a, *payee, v)

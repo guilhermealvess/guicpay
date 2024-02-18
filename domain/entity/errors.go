@@ -3,7 +3,13 @@ package entity
 import (
 	"fmt"
 
+	"errors"
+
 	"github.com/google/uuid"
+)
+
+var (
+	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )
 
 type TransactionError struct {

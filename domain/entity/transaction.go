@@ -50,7 +50,7 @@ func factoryTransferTransactions(payerAccount, payeeAccount Account, v Money) (p
 	payee = Transaction{
 		ID:              uuid.New(),
 		CorrelatedID:    uuid.NullUUID{UUID: correlatedID, Valid: true},
-		AccountID:       payee.ID,
+		AccountID:       payeeAccount.ID,
 		TransactionType: TransferPayee,
 		Timestamp:       now,
 		Amount:          v.Absolute(),

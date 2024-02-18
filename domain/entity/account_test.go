@@ -70,7 +70,7 @@ func TestAccount(t *testing.T) {
 	t.Run("transfer", func(t *testing.T) {
 		pa := Account(personal)
 		v := 300*Real + 55*Cent
-		depositInAccount(&pa, v)
+		depositInAccount(t, &pa, v)
 
 		before := time.Now()
 		sa := Account(seller)
@@ -87,7 +87,8 @@ func TestAccount(t *testing.T) {
 	})
 }
 
-func depositInAccount(account *Account, v Money) {
-	t := factoryDepositTransaction(*account, v)
-	account.Wallet = append(account.Wallet, t)
+func depositInAccount(t testing.TB, account *Account, v Money) {
+	t.Helper()
+	tr := factoryDepositTransaction(*account, v)
+	account.Wallet = append(account.Wallet, tr)
 }
