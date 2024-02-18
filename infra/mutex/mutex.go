@@ -2,7 +2,6 @@ package mutex
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -27,13 +26,17 @@ func NewMutex(address, password string) gateway.Mutex {
 func (m *mutex) Lock(ctx context.Context, key string, ttl time.Duration) error {
 	ok, err := m.client.SetNX("MUTEX::"+key, "LOCK", ttl).Result()
 	if !ok {
-		return errors.New("mutex: key is locked")
+		return fmt.Errorf("mutex: key is locked. %w", err)
 	}
 
-	return fmt.Errorf("mutex: %w", err)
+	return nil
 }
 
 func (m *mutex) Unlock(ctx context.Context, key string) error {
 	_, err := m.client.Del("MUTEX::" + key).Result()
-	return fmt.Errorf("mutex: %w", err)
+	if err != nil {
+		return fmt.Errorf("mutex: %w", err)
+	}
+
+	return nil
 }

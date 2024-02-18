@@ -42,13 +42,16 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 		return fmt.Errorf("TODO: ... %w", err)
 	}
 
-	var data map[string]any
-	if err := json.Unmarshal(body, &data); err != nil {
-		return fmt.Errorf("TODO: ..., %w", err)
+	var data struct {
+		Message string `json:"message"`
 	}
 
-	if data["message"].(string) != "TODO:" {
-		return errors.New("TODO:")
+	if err := json.Unmarshal(body, &data); err != nil {
+		return fmt.Errorf("service_error: ..., %w", err)
+	}
+
+	if data.Message != "Autorizado" {
+		return errors.New(data.Message)
 	}
 
 	return nil

@@ -1,15 +1,15 @@
 package database
 
 import (
-	"database/sql"
 	"log"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func NewConnectionDB() *sql.DB {
-	db, err := sql.Open("sqlite3", "./guicpay.db")
+func NewConnectionDB() *sqlx.DB {
+	db, err := sqlx.Open("sqlite3", "./guicpay.db")
 	if err != nil {
 		log.Fatal("Error opening database:", err)
 	}

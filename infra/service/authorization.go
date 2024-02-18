@@ -43,7 +43,7 @@ func (s *authorizationService) Authorize(ctx context.Context, account entity.Acc
 		return fmt.Errorf("TODO: ... %w", err)
 	}
 
-	if data["authorize"] != true {
+	if data["message"] != true {
 		return errors.New("TODO:")
 	}
 
