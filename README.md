@@ -1,4 +1,4 @@
-# guicpay
+# GuicPay
 
 GuicPay Simplificado
 
@@ -9,6 +9,7 @@ https://github.com/PicPay/picpay-desafio-backend
 ## Stack
 
 - Golang
-- PostgreSQL
+- SQLite
 - DDD
 - Clean Architecture
+- Microservices

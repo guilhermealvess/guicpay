@@ -3,4 +3,7 @@ deps:
 	- go mod tidy
 
 run:
-	- go run cmd/main.go
+	- go run cmd/api/main.go
+
+build:
+	- go build -o guicpay cmd/api/main.go
