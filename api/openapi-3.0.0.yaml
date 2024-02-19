@@ -1,0 +1,226 @@
+openapi: 3.0.0
+info:
+  title: Exemplo de API
+  version: 1.0.0
+paths:
+  /api/accounts:
+    post:
+      summary: Criar uma nova conta
+      requestBody:
+        $ref: '#/components/requestBodies/CreateAccount'
+      responses:
+        '200':
+          description: Sucesso ao criar uma conta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Requisição inválida
+
+    get:
+      summary: Listar contas
+      responses:
+        '200':
+          description: Sucesso ao listar contas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAccountsResponse'
+
+  /api/accounts/{account_id}:
+    get:
+      summary: Listar contas
+      responses:
+        '200':
+          description: Sucesso ao listar contas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountsResponse'
+
+  /api/accounts/{account_id}/deposit:
+    post:
+      summary: Realizar um depósito na conta
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema:
+            type: string
+          description: ID da conta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '200':
+          description: Depósito realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Requisição inválida
+        '404':
+          description: Conta não encontrada
+
+  /api/accounts/{account_id}/transfer:
+    post:
+      summary: Realizar uma transferência entre contas
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema:
+            type: string
+          description: ID da conta de origem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transferência realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Requisição inválida
+        '404':
+          description: Conta não encontrada
+
+components:
+  requestBodies:
+    CreateAccount:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccountInput'
+
+    DepositRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DepositRequest'
+
+    TransferRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TransferRequest'
+
+  schemas:
+    AccountInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        account_type:
+          type: string
+        document_number:
+          type: string
+        phone_number:
+          type: string
+      example:
+        name: "Alicia A Cook"
+        email: "alicia.keys@example.com"
+        password: "NewYork"
+        account_type: "PERSONAL"
+        document_number: "32165498710"
+        phone_number: "+5511991010101"
+
+    AccountResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+      example:
+        account_id: "73d13cc2-8408-4482-8197-fabf116b9443"
+
+    DepositRequest:
+      type: object
+      properties:
+        value:
+          type: number
+      example:
+        value: 7000000.00
+
+    TransactionResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+      example:
+        transaction_id: "cc6cdf84-4e52-47ac-91d1-3b263b5a83e5"
+
+    TransferRequest:
+      type: object
+      properties:
+        value:
+          type: number
+        payee:
+          type: string
+      example:
+        value: 15.95
+        payee: "402dbc93-57a1-4d0b-be29-a616795b8967"
+
+    ListAccountsResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          account_id:
+            type: string
+          account_type:
+            type: string
+          customer_name:
+            type: string
+          email:
+            type: string
+          balance:
+            type: string
+          status:
+            type: string
+        example:
+          - account_id: "4cbed77f-bb79-4867-b71a-65c2d5611746"
+            account_type: ""
+            customer_name: ""
+            email: ""
+            balance: "0.00 BRL"
+            status: "ACTIVE"
+
+    GetAccountsResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+        account_type:
+          type: string
+        customer_name:
+          type: string
+        email:
+          type: string
+        balance:
+          type: string
+        status:
+          type: string
+      example:
+        account_id: "4cbed77f-bb79-4867-b71a-65c2d5611746"
+        account_type: ""
+        customer_name: ""
+        email: ""
+        balance: "0.00 BRL"
+        status: "ACTIVE"
