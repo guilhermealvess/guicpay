@@ -57,16 +57,17 @@ func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccou
 								'account_id', tr.account_id, 
 								'correlated_id', tr.correlated_id, 
 								'timestamp', tr."timestamp", 
-								'transaction_type', tr.transaction_type
+								'transaction_type', tr.transaction_type,
+								'snapshot_id', tr.snapshot_id
 							))
 		END	as transactions
 		FROM accounts ac
 		LEFT JOIN transactions tr ON ac.id = tr.account_id
-		WHERE ac.id = ? GROUP BY ac.id;
+		WHERE ac.id = ? AND tr.snapshot_id IS NULL GROUP BY ac.id;
 	`
 	var row FindAccountByIDRow
 	if err := q.db.GetContext(ctx, &row, findAccountByID, id); err != nil {
-		return nil, fmt.Errorf("TODO: ... %w", err)
+		return nil, fmt.Errorf("database: ... %w", err)
 	}
 
 	return &row, nil
@@ -102,12 +103,13 @@ type SaveTransactionParams struct {
 	TransactionType string        `db:"transaction_type" json:"transaction_type"`
 	Timestamp       time.Time     `db:"timestamp" json:"timestamp"`
 	Amount          int64         `db:"amount" json:"amount"`
+	SnapshotID      uuid.NullUUID `db:"snapshot_id" json:"snapshot_id"`
 }
 
 func (q *Queries) SaveTransaction(ctx context.Context, params SaveTransactionParams) error {
-	const query = `INSERT INTO transactions (id,correlated_id,account_id,transaction_type,timestamp,amount)
-	VALUES (?,?,?,?,?,?)`
-	_, err := q.db.ExecContext(ctx, query, params.ID, params.CorrelatedID, params.AccountID, params.TransactionType, params.Timestamp, params.Amount)
+	const query = `INSERT INTO transactions (id,correlated_id,account_id,transaction_type,timestamp,amount,snapshot_id)
+	VALUES (?,?,?,?,?,?,?)`
+	_, err := q.db.ExecContext(ctx, query, params.ID, params.CorrelatedID, params.AccountID, params.TransactionType, params.Timestamp, params.Amount, params.SnapshotID)
 	return err
 }
 
@@ -131,16 +133,45 @@ func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountByIDRow, error) {
 								'account_id', tr.account_id, 
 								'correlated_id', tr.correlated_id, 
 								'timestamp', tr."timestamp", 
-								'transaction_type', tr.transaction_type
+								'transaction_type', tr.transaction_type,
+								'snapshot_id', tr.snapshot_id
 							))
 		END	as transactions
 	FROM accounts ac LEFT JOIN transactions tr on tr.account_id = ac.id 
+	WHERE tr.snapshot_id IS NULL
 	GROUP BY ac.id ORDER BY ac.created_at desc;`
 
 	var rows []*FindAccountByIDRow
 	if err := q.db.SelectContext(ctx, &rows, query); err != nil {
-		return nil, fmt.Errorf("TODO: ... %w", err)
+		return nil, fmt.Errorf("database: ... %w", err)
 	}
 
 	return rows, nil
+}
+
+func (q *Queries) SetSnapshotTransactions(ctx context.Context, snapshotID uuid.UUID, transactionIDs uuid.UUIDs) error {
+	query := "UPDATE transactions SET snapshot_id = ? WHERE id IN ("
+	for i, id := range transactionIDs {
+		if i > 0 {
+			query += ", "
+		}
+		query += fmt.Sprintf("'%s'", id.String())
+	}
+	query += ")"
+
+	result, err := q.db.ExecContext(ctx, query, snapshotID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("database: %w", sql.ErrNoRows)
+	}
+
+	return nil
 }

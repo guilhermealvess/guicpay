@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/guilhermealvess/guicpay/domain/usecase"
 	"github.com/guilhermealvess/guicpay/infra/mutex"
 	"github.com/guilhermealvess/guicpay/infra/repository"
@@ -16,6 +18,8 @@ import (
 func main() {
 	fmt.Println("Guic Pay Simplificado ...")
 
+	queue, snapshotBackgroundWorker := buildSnapShotWorker()
+
 	// Gateway
 	repo := repository.NewAccountRepository(database.NewConnectionDB())
 	mu := mutex.NewMutex(properties.Props.RedisAddress, "")
@@ -23,7 +27,8 @@ func main() {
 	authService := service.NewAuthorizationService(properties.Props.AuthorizeServiceURL)
 
 	// UseCase
-	usecase := usecase.NewAccountUseCase(repo, mu, notificationService, authService)
+	usecase := usecase.NewAccountUseCase(repo, mu, notificationService, authService, queue)
+	go snapshotBackgroundWorker(usecase)
 
 	// Handler
 	handler := http.NewAccountHandler(usecase)
@@ -33,4 +38,15 @@ func main() {
 	server.Use(middleware.Logger())
 	server.Use(middleware.RequestID())
 	server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", properties.Props.Port)))
+	close(queue)
+}
+
+func buildSnapShotWorker() (chan uuid.UUID, func(usecase.AccountUseCase)) {
+	queue := make(chan uuid.UUID)
+
+	return queue, func(usecase usecase.AccountUseCase) {
+		for accountID := range queue {
+			go usecase.ExecuteSnapshotTransaction(context.Background(), accountID)
+		}
+	}
 }

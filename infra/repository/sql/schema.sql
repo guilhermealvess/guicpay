@@ -18,5 +18,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     account_id UUID NOT NULL REFERENCES accounts(id),
     transaction_type VARCHAR(50) NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL,
-    amount BIGINT NOT NULL
+    amount BIGINT NOT NULL,
+    snapshot_id UUID REFERENCES transactions(id)
 );

@@ -23,6 +23,12 @@ func (u *accountUseCase) ExecuteDeposit(ctx context.Context, accountID uuid.UUID
 		return uuid.Nil, err
 	}
 
+	if len(account.Wallet) >= properties.Props.SnapshotWalletSize {
+		go func() {
+			u.queue <- account.ID
+		}()
+	}
+
 	tx, err := u.repository.NewTransaction(ctx)
 	if err != nil {
 		return uuid.Nil, err

@@ -44,7 +44,7 @@ func (r *accountRepository) CreateAccount(ctx context.Context, account entity.Ac
 		AccountType:     string(account.AccountType),
 		PhoneNumber:     account.PhoneNumber,
 		CreatedAt:       account.CreatedAt,
-		UpdatedAt:       account.UpdadatedAt,
+		UpdatedAt:       account.UpdatedAt,
 	})
 }
 
@@ -75,7 +75,7 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 		PhoneNumber:     row.Account.PhoneNumber,
 		Status:          entity.AccountStatus(row.Account.Status),
 		CreatedAt:       createdAt,
-		UpdadatedAt:     updatedAt,
+		UpdatedAt:       updatedAt,
 	}
 
 	var transactions []queries.Transaction
@@ -96,9 +96,10 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 			TransactionType: entity.TransactionType(t.TransactionType),
 			Timestamp:       timestamp,
 			Amount:          entity.Money(t.Amount),
+			SnapshotID:      t.SnapshotID,
 		}
 
-		account.Wallet = append(account.Wallet, transaction)
+		account.Wallet = append(account.Wallet, &transaction)
 	}
 
 	return &account, nil
@@ -182,7 +183,7 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 			PhoneNumber:     row.Account.PhoneNumber,
 			Status:          entity.AccountStatus(row.Account.Status),
 			CreatedAt:       createdAt,
-			UpdadatedAt:     updatedAt,
+			UpdatedAt:       updatedAt,
 		}
 
 		var transactions []queries.Transaction
@@ -203,15 +204,20 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 				TransactionType: entity.TransactionType(t.TransactionType),
 				Timestamp:       timestamp,
 				Amount:          entity.Money(t.Amount),
+				SnapshotID:      t.SnapshotID,
 			}
 
-			account.Wallet = append(account.Wallet, transaction)
+			account.Wallet = append(account.Wallet, &transaction)
 		}
 
 		accounts = append(accounts, &account)
 	}
 
 	return accounts, nil
+}
+
+func (r *accountRepository) SetSnapshotTransactions(ctx context.Context, snapshotID uuid.UUID, transactionIDs uuid.UUIDs) error {
+	return r.query(ctx).SetSnapshotTransactions(ctx, snapshotID, transactionIDs)
 }
 
 func (r *accountRepository) query(ctx context.Context) *queries.Queries {

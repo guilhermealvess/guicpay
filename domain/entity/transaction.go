@@ -12,6 +12,7 @@ const (
 	Deposit       TransactionType = "DEPOSIT"
 	TransferPayer TransactionType = "TRANSFER_PAYER"
 	TransferPayee TransactionType = "TRANSFER_PAYEE"
+	Snapshot      TransactionType = "SNAPSHOT"
 )
 
 type Transaction struct {
@@ -21,6 +22,7 @@ type Transaction struct {
 	TransactionType TransactionType
 	Timestamp       time.Time
 	Amount          Money
+	SnapshotID      uuid.NullUUID
 }
 
 func factoryDepositTransaction(account Account, v Money) Transaction {
@@ -59,7 +61,7 @@ func factoryTransferTransactions(payerAccount, payeeAccount Account, v Money) (p
 	return
 }
 
-type Wallet []Transaction
+type Wallet []*Transaction
 
 func (w *Wallet) Balance() Money {
 	var balance Money
@@ -68,4 +70,24 @@ func (w *Wallet) Balance() Money {
 	}
 
 	return balance
+}
+
+func (w *Wallet) Snapshot(accountID uuid.UUID) *Transaction {
+	snapshotID := uuid.New()
+	var balance Money
+
+	for _, t := range *w {
+		balance += t.Amount
+		t.SnapshotID = uuid.NullUUID{UUID: snapshotID, Valid: true}
+	}
+
+	return &Transaction{
+		ID:              snapshotID,
+		AccountID:       accountID,
+		TransactionType: Snapshot,
+		Timestamp:       time.Now().UTC(),
+		Amount:          balance,
+		SnapshotID:      uuid.NullUUID{},
+		CorrelatedID:    uuid.NullUUID{},
+	}
 }

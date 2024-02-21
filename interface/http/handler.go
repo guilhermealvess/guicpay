@@ -27,6 +27,10 @@ func (h *accountHandler) CreateAccount(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	if err := usecase.ValidateDTO(&input); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
 	output, err := h.usecase.ExecuteNewAccount(c.Request().Context(), input)
 	m := map[string]string{
 		"account_id": output.String(),
@@ -42,10 +46,14 @@ func (h *accountHandler) AccountDeposit(c echo.Context) error {
 	}
 
 	var data struct {
-		Value float64 `json:"value"`
+		Value float64 `json:"value" validate:"required,min=0.01"`
 	}
 
 	if err := c.Bind(&data); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := usecase.ValidateDTO(&data); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
@@ -64,11 +72,15 @@ func (h *accountHandler) AccountTransfer(c echo.Context) error {
 	}
 
 	var data struct {
-		Value   float64   `json:"value"`
-		PayeeID uuid.UUID `json:"payee"`
+		Value   float64   `json:"value" validate:"required,min=0.01"`
+		PayeeID uuid.UUID `json:"payee" validate:"required"`
 	}
 
 	if err := c.Bind(&data); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := usecase.ValidateDTO(&data); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 

@@ -32,7 +32,7 @@ type Account struct {
 	PhoneNumber     string
 	Status          AccountStatus
 	CreatedAt       time.Time
-	UpdadatedAt     time.Time
+	UpdatedAt     time.Time
 	Wallet          Wallet
 }
 
@@ -48,8 +48,8 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 		PhoneNumber:     phone,
 		Status:          AccountStatusActive,
 		CreatedAt:       now,
-		UpdadatedAt:     now,
-		Wallet:          []Transaction{},
+		UpdatedAt:     now,
+		Wallet:          []*Transaction{},
 	}
 }
 
@@ -59,7 +59,7 @@ func (a *Account) Deposit(v Money) (*Transaction, error) {
 	}
 
 	t := factoryDepositTransaction(*a, v)
-	a.Wallet = append(a.Wallet, t)
+	a.Wallet = append(a.Wallet, &t)
 
 	return &t, nil
 }
@@ -74,8 +74,8 @@ func (a *Account) Transfer(payee *Account, v Money) (*TransferOutput, error) {
 	}
 
 	t1, t2 := factoryTransferTransactions(*a, *payee, v)
-	a.Wallet = append(a.Wallet, t1)
-	payee.Wallet = append(payee.Wallet, t2)
+	a.Wallet = append(a.Wallet, &t1)
+	payee.Wallet = append(payee.Wallet, &t2)
 
 	return &TransferOutput{
 		Payer:        &t1,

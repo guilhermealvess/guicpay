@@ -41,4 +41,5 @@ type Transaction struct {
 	Timestamp       Datetime      `db:"timestamp" json:"timestamp"`
 	TransactionType string        `db:"transaction_type" json:"transaction_type"`
 	Amount          int64         `db:"amount" json:"amount"`
+	SnapshotID      uuid.NullUUID `db:"snapshot_id" json:"snapshot_id"`
 }

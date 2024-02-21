@@ -47,6 +47,12 @@ func (u *accountUseCase) ExecuteTransfer(ctx context.Context, payer, payee uuid.
 		return uuid.Nil, err
 	}
 
+	if len(payerAccount.Wallet) >= properties.Props.SnapshotWalletSize {
+		go func() {
+			u.queue <- payerAccount.ID
+		}()
+	}
+
 	if err := u.repository.SaveAtomicTransactions(ctx, *output.Payer, *output.Payee); err != nil {
 		return uuid.Nil, err
 	}

@@ -90,5 +90,5 @@ func TestAccount(t *testing.T) {
 func depositInAccount(t testing.TB, account *Account, v Money) {
 	t.Helper()
 	tr := factoryDepositTransaction(*account, v)
-	account.Wallet = append(account.Wallet, tr)
+	account.Wallet = append(account.Wallet, &tr)
 }

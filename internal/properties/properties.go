@@ -14,6 +14,7 @@ type props struct {
 	RedisAddress           string        `env:"REDIS_ADDRESS"`
 	AuthorizeServiceURL    string        `env:"AUTHORIZE_SERVICE_URL"`
 	NotificationServiceURL string        `env:"NOTIFICATION_SERVICE_URL"`
+	SnapshotWalletSize     int           `env:"SNAPSHOT_WALLET_SIZE,default=10"`
 }
 
 var Props props
