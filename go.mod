@@ -4,6 +4,7 @@ go 1.21.7
 
 require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
+	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/go-playground/validator/v10 v10.18.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.6.0
