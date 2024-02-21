@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
@@ -12,7 +11,9 @@ import (
 )
 
 func (u *accountUseCase) ExecuteSnapshotTransaction(ctx context.Context, accountID uuid.UUID) {
-	time.Sleep(time.Second / 2)
+	ctx, cancel := context.WithTimeout(ctx, properties.Props.TransactionTimeout)
+	defer cancel()
+
 	tx, err := u.repository.NewTransaction(ctx)
 	if err != nil {
 		logger.Logger.Error("Error in new tx", zap.Error(err))
