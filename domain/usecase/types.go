@@ -6,7 +6,7 @@ import (
 )
 
 type NewAccountInput struct {
-	Name           string `json:"name" validate:"required"`
+	Name           string `json:"customer_name" validate:"required"`
 	Email          string `json:"email" validate:"required"`
 	Password       string `json:"password" validate:"required"`
 	Type           string `json:"account_type" validate:"required"`

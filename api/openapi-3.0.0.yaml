@@ -122,7 +122,7 @@ components:
     AccountInput:
       type: object
       properties:
-        name:
+        customer_name:
           type: string
         email:
           type: string
@@ -135,7 +135,7 @@ components:
         phone_number:
           type: string
       example:
-        name: "Alicia A Cook"
+        customer_name: "Alicia A Cook"
         email: "alicia.keys@example.com"
         password: "NewYork"
         account_type: "PERSONAL"
