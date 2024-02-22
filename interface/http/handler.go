@@ -9,6 +9,8 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/usecase"
 	"github.com/labstack/echo/v4"
+
+	"go.opentelemetry.io/otel"
 )
 
 type accountHandler struct {
@@ -66,6 +68,10 @@ func (h *accountHandler) AccountDeposit(c echo.Context) error {
 }
 
 func (h *accountHandler) AccountTransfer(c echo.Context) error {
+	tracer := otel.GetTracerProvider().Tracer("my-server")
+	ctx, span := tracer.Start(c.Request().Context(), "handleRequest")
+	defer span.End()
+
 	payerID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -84,7 +90,7 @@ func (h *accountHandler) AccountTransfer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	output, err := h.usecase.ExecuteTransfer(c.Request().Context(), payerID, data.PayeeID, uint64(data.Value*100))
+	output, err := h.usecase.ExecuteTransfer(ctx, payerID, data.PayeeID, uint64(data.Value*100))
 	m := map[string]string{
 		"transaction_id": output.String(),
 	}
