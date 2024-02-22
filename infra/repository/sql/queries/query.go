@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -33,12 +34,11 @@ func (q *Queries) WithTx(tx *sqlx.Tx) *Queries {
 
 type FindAccountByIDRow struct {
 	Account
-	Transactions JSON `db:"transactions"`
+	Transactions json.RawMessage `db:"transactions"`
 }
 
 func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccountByIDRow, error) {
-	const findAccountByID = `
-		SELECT ac.id, 
+	const findAccountByID = `SELECT ac.id, 
 		ac.account_type, 
 		ac.customer_name, 
 		ac.document_number, 
@@ -49,25 +49,16 @@ func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccou
 		ac.status, 
 		ac.created_at, 
 		ac.updated_at,
-		CASE 
-			WHEN tr.account_id IS NULL THEN 'null'
-			ELSE json_group_array(json_object(
-								'id', tr.id, 
-								'amount', tr.amount, 
-								'account_id', tr.account_id, 
-								'correlated_id', tr.correlated_id, 
-								'timestamp', tr."timestamp", 
-								'transaction_type', tr.transaction_type,
-								'snapshot_id', tr.snapshot_id
-							))
-		END	as transactions
-		FROM accounts ac
-		LEFT JOIN transactions tr ON ac.id = tr.account_id
-		WHERE ac.id = ? AND tr.snapshot_id IS NULL GROUP BY ac.id;
-	`
+		CASE
+			WHEN tr.account_id IS NULL THEN 'null'::json
+			ELSE json_agg(tr.*)
+		END AS transactions
+	FROM accounts ac
+	LEFT JOIN transactions tr ON ac.id = tr.account_id
+	WHERE ac.id = $1 AND tr.snapshot_id IS NULL GROUP BY ac.id, tr.account_id;`
 	var row FindAccountByIDRow
 	if err := q.db.GetContext(ctx, &row, findAccountByID, id); err != nil {
-		return nil, fmt.Errorf("database: ... %w", err)
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	return &row, nil
@@ -90,8 +81,7 @@ type SaveAccountParams struct {
 func (q *Queries) SaveAccount(ctx context.Context, params SaveAccountParams) error {
 	const query = `
 	INSERT INTO accounts (id,account_type,customer_name,document_number,email,password_encoded,salt_hash_password,phone_number,status,created_at,updated_at) 
-	VALUES (?,?,?,?,?,?,?,?,?,?,?);
-	`
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);`
 	_, err := q.db.ExecContext(ctx, query, params.ID, params.AccountType, params.CustomerName, params.DocumentNumber, params.Email, params.PasswordEncoded, params.SaltHash, params.PhoneNumber, params.Status, params.CreatedAt, params.UpdatedAt)
 	return err
 }
@@ -108,7 +98,7 @@ type SaveTransactionParams struct {
 
 func (q *Queries) SaveTransaction(ctx context.Context, params SaveTransactionParams) error {
 	const query = `INSERT INTO transactions (id,correlated_id,account_id,transaction_type,timestamp,amount,snapshot_id)
-	VALUES (?,?,?,?,?,?,?)`
+	VALUES ($1,$2,$3,$4,$5,$6,$7)`
 	_, err := q.db.ExecContext(ctx, query, params.ID, params.CorrelatedID, params.AccountID, params.TransactionType, params.Timestamp, params.Amount, params.SnapshotID)
 	return err
 }
@@ -125,32 +115,24 @@ func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountByIDRow, error) {
 		ac.status, 
 		ac.created_at, 
 		ac.updated_at,
-		CASE 
-			WHEN tr.account_id IS NULL THEN 'null'
-			ELSE json_group_array(json_object(
-								'id', tr.id, 
-								'amount', tr.amount, 
-								'account_id', tr.account_id, 
-								'correlated_id', tr.correlated_id, 
-								'timestamp', tr."timestamp", 
-								'transaction_type', tr.transaction_type,
-								'snapshot_id', tr.snapshot_id
-							))
-		END	as transactions
+		CASE
+			WHEN tr.account_id IS NULL THEN 'null'::json
+			ELSE json_agg(tr.*)
+		END AS transactions
 	FROM accounts ac LEFT JOIN transactions tr on tr.account_id = ac.id 
 	WHERE tr.snapshot_id IS NULL
-	GROUP BY ac.id ORDER BY ac.created_at desc;`
+	GROUP BY ac.id, tr.account_id ORDER BY ac.created_at desc;`
 
 	var rows []*FindAccountByIDRow
 	if err := q.db.SelectContext(ctx, &rows, query); err != nil {
-		return nil, fmt.Errorf("database: ... %w", err)
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	return rows, nil
 }
 
 func (q *Queries) SetSnapshotTransactions(ctx context.Context, snapshotID uuid.UUID, transactionIDs uuid.UUIDs) error {
-	query := "UPDATE transactions SET snapshot_id = ? WHERE id IN ("
+	query := "UPDATE transactions SET snapshot_id = $1 WHERE id IN ("
 	for i, id := range transactionIDs {
 		if i > 0 {
 			query += ", "

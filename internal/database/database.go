@@ -4,14 +4,15 @@ import (
 	"log"
 	"time"
 
+	"github.com/guilhermealvess/guicpay/internal/properties"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq" // driver postgres
 )
 
 func NewConnectionDB() *sqlx.DB {
-	db, err := sqlx.Open("sqlite3", "./guicpay.db")
+	db, err := sqlx.Open("postgres", properties.Props.DatabaseURL)
 	if err != nil {
-		log.Fatal("Error opening database:", err)
+		log.Panicf("failed to connect on database: %v", err)
 	}
 
 	if err := db.Ping(); err != nil {

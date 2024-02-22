@@ -15,6 +15,7 @@ type props struct {
 	AuthorizeServiceURL    string        `env:"AUTHORIZE_SERVICE_URL"`
 	NotificationServiceURL string        `env:"NOTIFICATION_SERVICE_URL"`
 	SnapshotWalletSize     int           `env:"SNAPSHOT_WALLET_SIZE,default=10"`
+	DatabaseURL            string        `env:"DATABASE_URL"`
 }
 
 var Props props
