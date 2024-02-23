@@ -7,3 +7,6 @@ run:
 
 build:
 	- go build -o guicpay cmd/api/main.go
+
+docker-run:
+	- docker-compose up -d
