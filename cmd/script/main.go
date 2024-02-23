@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const baseURL = "http://localhost:3000/api/accounts"
+const baseURL = "http://localhost:8080/api/accounts"
 
 var logger *zap.Logger
 

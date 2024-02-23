@@ -30,15 +30,15 @@ type Account struct {
 	Salt            string    `db:"salt_hash_password" json:"salt"`
 	PhoneNumber     string    `db:"phone_number" json:"phone_number"`
 	Status          string    `db:"status" json:"status"`
-	CreatedAt       Datetime  `db:"created_at" json:"created_at"`
-	UpdatedAt       Datetime  `db:"updated_at" json:"updated_at"`
+	CreatedAt       time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type Transaction struct {
 	ID              uuid.UUID     `db:"id" json:"id"`
 	AccountID       uuid.UUID     `db:"account_type" json:"account_type"`
 	CorrelatedID    uuid.NullUUID `db:"correlated_id" json:"correlated_id"`
-	Timestamp       Datetime      `db:"timestamp" json:"timestamp"`
+	Timestamp       time.Time     `db:"timestamp" json:"timestamp"`
 	TransactionType string        `db:"transaction_type" json:"transaction_type"`
 	Amount          int64         `db:"amount" json:"amount"`
 	SnapshotID      uuid.NullUUID `db:"snapshot_id" json:"snapshot_id"`

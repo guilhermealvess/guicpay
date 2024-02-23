@@ -30,6 +30,3 @@ guicpay
 
 # Local test
 m.go
-
-# File Database
-guicpay.db

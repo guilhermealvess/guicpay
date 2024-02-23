@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/guilhermealvess/guicpay/domain/entity"
@@ -54,16 +55,6 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 		return nil, err
 	}
 
-	createdAt, err := row.Account.CreatedAt.Time()
-	if err != nil {
-		return nil, err
-	}
-
-	updatedAt, err := row.Account.UpdatedAt.Time()
-	if err != nil {
-		return nil, err
-	}
-
 	account := entity.Account{
 		ID:              row.Account.ID,
 		AccountType:     entity.AccountType(row.Account.AccountType),
@@ -74,32 +65,12 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 		Salt:            row.Account.Salt,
 		PhoneNumber:     row.Account.PhoneNumber,
 		Status:          entity.AccountStatus(row.Account.Status),
-		CreatedAt:       createdAt,
-		UpdatedAt:       updatedAt,
+		CreatedAt:       row.Account.CreatedAt,
+		UpdatedAt:       row.Account.UpdatedAt,
 	}
 
-	var transactions []queries.Transaction
-	if err := row.Transactions.Bind(&transactions); err != nil {
+	if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
 		return nil, err
-	}
-
-	for _, t := range transactions {
-		timestamp, err := t.Timestamp.Time()
-		if err != nil {
-			return nil, err
-		}
-
-		transaction := entity.Transaction{
-			ID:              t.ID,
-			CorrelatedID:    t.CorrelatedID,
-			AccountID:       t.AccountID,
-			TransactionType: entity.TransactionType(t.TransactionType),
-			Timestamp:       timestamp,
-			Amount:          entity.Money(t.Amount),
-			SnapshotID:      t.SnapshotID,
-		}
-
-		account.Wallet = append(account.Wallet, &transaction)
 	}
 
 	return &account, nil
@@ -162,16 +133,6 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 
 	accounts := make([]*entity.Account, 0)
 	for _, row := range rows {
-		createdAt, err := row.Account.CreatedAt.Time()
-		if err != nil {
-			return nil, err
-		}
-
-		updatedAt, err := row.Account.CreatedAt.Time()
-		if err != nil {
-			return nil, err
-		}
-
 		account := entity.Account{
 			ID:              row.Account.ID,
 			AccountType:     entity.AccountType(row.Account.AccountType),
@@ -182,32 +143,12 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 			Salt:            row.Account.Salt,
 			PhoneNumber:     row.Account.PhoneNumber,
 			Status:          entity.AccountStatus(row.Account.Status),
-			CreatedAt:       createdAt,
-			UpdatedAt:       updatedAt,
+			CreatedAt:       row.Account.CreatedAt,
+			UpdatedAt:       row.Account.UpdatedAt,
 		}
 
-		var transactions []queries.Transaction
-		if err := row.Transactions.Bind(&transactions); err != nil {
+		if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
 			return nil, err
-		}
-
-		for _, t := range transactions {
-			timestamp, err := t.Timestamp.Time()
-			if err != nil {
-				return nil, err
-			}
-
-			transaction := entity.Transaction{
-				ID:              t.ID,
-				CorrelatedID:    t.CorrelatedID,
-				AccountID:       t.AccountID,
-				TransactionType: entity.TransactionType(t.TransactionType),
-				Timestamp:       timestamp,
-				Amount:          entity.Money(t.Amount),
-				SnapshotID:      t.SnapshotID,
-			}
-
-			account.Wallet = append(account.Wallet, &transaction)
 		}
 
 		accounts = append(accounts, &account)
