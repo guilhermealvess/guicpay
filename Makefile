@@ -10,3 +10,6 @@ build:
 
 docker-run:
 	- docker-compose up -d
+
+ping:
+	- curl http://localhost:8080/api/ping

@@ -31,6 +31,7 @@ services:
       - postgres
     deploy:
       replicas: 2
+    restart: always
     command: "./guicpay"
 
   nginx:
