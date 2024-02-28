@@ -20,6 +20,7 @@ func (u *accountUseCase) ExecuteTransfer(ctx context.Context, payer, payee uuid.
 		return uuid.Nil, err
 	}
 
+	defer tx.Commit()
 	ctx = gateway.InjectTransaction(ctx, tx)
 	if err := u.mutex.Lock(ctx, payer.String(), properties.Props.TransactionTimeout); err != nil {
 		return uuid.Nil, err

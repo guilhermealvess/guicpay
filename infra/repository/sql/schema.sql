@@ -21,3 +21,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount BIGINT NOT NULL,
     snapshot_id UUID REFERENCES transactions(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_account_email ON accounts(email);
+
+CREATE INDEX IF NOT EXISTS idx_account_document_number ON accounts(document_number);

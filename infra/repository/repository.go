@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/guilhermealvess/guicpay/domain/entity"
@@ -52,7 +53,7 @@ func (r *accountRepository) CreateAccount(ctx context.Context, account entity.Ac
 func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
 	row, err := r.queries.FindAccountByID(ctx, accountID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	account := entity.Account{
@@ -70,7 +71,7 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 	}
 
 	if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	return &account, nil
@@ -91,7 +92,7 @@ func (r *accountRepository) FindAccountByIDs(ctx context.Context, ids ...uuid.UU
 	result := make(map[uuid.UUID]*entity.Account)
 	for range ids {
 		if err := <-chError; err != nil {
-			return nil, err
+			return nil, fmt.Errorf("database: %w", err)
 		}
 
 		account := <-chAccount
@@ -118,7 +119,7 @@ func (r *accountRepository) SaveAtomicTransactions(ctx context.Context, transact
 
 	for range transactions {
 		if err := <-ch; err != nil {
-			return err
+			return fmt.Errorf("database: %w", err)
 		}
 	}
 
@@ -148,7 +149,7 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 		}
 
 		if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("database: %w", err)
 		}
 
 		accounts = append(accounts, &account)
@@ -159,6 +160,51 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 
 func (r *accountRepository) SetSnapshotTransactions(ctx context.Context, snapshotID uuid.UUID, transactionIDs uuid.UUIDs) error {
 	return r.query(ctx).SetSnapshotTransactions(ctx, snapshotID, transactionIDs)
+}
+
+func (r *accountRepository) FindAccountByEmail(ctx context.Context, email string) (*entity.Account, error) {
+	row, err := r.queries.FindAccountByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	account := entity.Account{
+		ID:              row.Account.ID,
+		AccountType:     entity.AccountType(row.Account.AccountType),
+		CustomerName:    row.Account.CustomerName,
+		DocumentNumber:  row.Account.DocumentNumber,
+		Email:           row.Account.Email,
+		PasswordEncoded: row.Account.PasswordEncoded,
+		Salt:            row.Account.Salt,
+		PhoneNumber:     row.Account.PhoneNumber,
+		Status:          entity.AccountStatus(row.Account.Status),
+		CreatedAt:       row.Account.CreatedAt,
+		UpdatedAt:       row.Account.UpdatedAt,
+	}
+
+	if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
+		return nil, fmt.Errorf("database: %w", err)
+	}
+
+	return &account, nil
+}
+
+func (r *accountRepository) FindResumeAccount(ctx context.Context, email string) (*entity.ResumeAccount, error) {
+	row, err := r.queries.FindResumeAccount(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	account := entity.ResumeAccount{
+		ID:              row.ID,
+		AccountType:     entity.AccountType(row.AccountType),
+		Email:           row.Email,
+		Status:          entity.AccountStatus(row.Status),
+		Salt:            row.Salt,
+		PasswordEncoded: row.Password,
+	}
+
+	return &account, nil
 }
 
 func (r *accountRepository) query(ctx context.Context) *queries.Queries {
