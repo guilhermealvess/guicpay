@@ -18,9 +18,13 @@ func NewServer(h *accountHandler) *echo.Echo {
 	})
 
 	api.POST("/accounts", h.CreateAccount)
-	api.GET("/accounts", h.List)
-	api.GET("/accounts/:id", h.Fetch)
-	api.POST("/accounts/:id/deposit", h.AccountDeposit)
-	api.POST("/accounts/:id/transfer", h.AccountTransfer)
+	api.GET("/accounts", h.List, validateToken)
+	api.GET("/accounts/me", h.Fetch, validateToken)
+
+	api.POST("/transactions/deposit", h.AccountDeposit, validateToken)
+	api.POST("/transactions/transfer", h.AccountTransfer, validateToken)
+
+	api.POST("/auth", h.Auth)
+
 	return server
 }

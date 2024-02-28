@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 )
 
@@ -14,6 +15,7 @@ type AccountUseCase interface {
 	FindByID(ctx context.Context, accountID uuid.UUID) (*AccountOutput, error)
 	FindAll(ctx context.Context) ([]*AccountOutput, error)
 	ExecuteSnapshotTransaction(ctx context.Context, accountID uuid.UUID)
+	ExecuteLogin(ctx context.Context, email, password string) (*entity.ResumeAccount, error)
 }
 
 type accountUseCase struct {

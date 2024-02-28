@@ -20,10 +20,6 @@ var SwaggerInfo_swagger = &swag.Spec{
 	SwaggerTemplate:  read(),
 }
 
-func init() {
-	swag.Register(SwaggerInfo_swagger.InstanceName(), SwaggerInfo_swagger)
-}
-
 func read() string {
 	filePath := "./docs/swagger.yaml"
 	content, err := os.ReadFile(filePath)
@@ -32,4 +28,8 @@ func read() string {
 	}
 	fileContent := string(content)
 	return fileContent
+}
+
+func init() {
+	swag.Register(SwaggerInfo_swagger.InstanceName(), SwaggerInfo_swagger)
 }

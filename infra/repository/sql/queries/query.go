@@ -32,12 +32,12 @@ func (q *Queries) WithTx(tx *sqlx.Tx) *Queries {
 	}
 }
 
-type FindAccountByIDRow struct {
+type FindAccountRow struct {
 	Account
 	Transactions json.RawMessage `db:"transactions"`
 }
 
-func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccountByIDRow, error) {
+func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccountRow, error) {
 	const findAccountByID = `SELECT ac.id, 
 		ac.account_type, 
 		ac.customer_name, 
@@ -56,7 +56,7 @@ func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccou
 	FROM accounts ac
 	LEFT JOIN transactions tr ON ac.id = tr.account_id
 	WHERE ac.id = $1 AND tr.snapshot_id IS NULL GROUP BY ac.id, tr.account_id;`
-	var row FindAccountByIDRow
+	var row FindAccountRow
 	if err := q.db.GetContext(ctx, &row, findAccountByID, id); err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}
@@ -103,7 +103,7 @@ func (q *Queries) SaveTransaction(ctx context.Context, params SaveTransactionPar
 	return err
 }
 
-func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountByIDRow, error) {
+func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountRow, error) {
 	const query = `SELECT ac.id, 
 		ac.account_type, 
 		ac.customer_name, 
@@ -123,7 +123,7 @@ func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountByIDRow, error) {
 	WHERE tr.snapshot_id IS NULL
 	GROUP BY ac.id, tr.account_id ORDER BY ac.created_at desc;`
 
-	var rows []*FindAccountByIDRow
+	var rows []*FindAccountRow
 	if err := q.db.SelectContext(ctx, &rows, query); err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}
@@ -156,4 +156,39 @@ func (q *Queries) SetSnapshotTransactions(ctx context.Context, snapshotID uuid.U
 	}
 
 	return nil
+}
+
+func (q *Queries) FindAccountByEmail(ctx context.Context, email string) (*FindAccountRow, error) {
+	const query = `SELECT ac.id, 
+		ac.account_type, 
+		ac.customer_name, 
+		ac.document_number, 
+		ac.email, 
+		ac.password_encoded, 
+		ac.salt_hash_password, 
+		ac.phone_number, 
+		ac.status, 
+		ac.created_at, 
+		ac.updated_at,
+		CASE
+			WHEN tr.account_id IS NULL THEN 'null'::json
+			ELSE json_agg(tr.*)
+		END AS transactions
+	FROM accounts ac
+	LEFT JOIN transactions tr ON ac.id = tr.account_id
+	WHERE ac.email = $1 AND tr.snapshot_id IS NULL GROUP BY ac.id, tr.account_id`
+
+	var row FindAccountRow
+	err := q.db.GetContext(ctx, &row, query, email)
+	return &row, err
+}
+
+func (q *Queries) FindResumeAccount(ctx context.Context, email string) (*ResumeAccount, error) {
+	const query = `SELECT id, account_type, status, email, password_encoded, salt_hash_password FROM accounts WHERE email = $1`
+	var row ResumeAccount
+	if err := q.db.GetContext(ctx, &row, query, email); err != nil {
+		return nil, err
+	}
+
+	return &row, nil
 }

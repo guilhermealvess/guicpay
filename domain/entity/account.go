@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -32,7 +33,7 @@ type Account struct {
 	PhoneNumber     string
 	Status          AccountStatus
 	CreatedAt       time.Time
-	UpdatedAt     time.Time
+	UpdatedAt       time.Time
 	Wallet          Wallet
 }
 
@@ -48,7 +49,7 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 		PhoneNumber:     phone,
 		Status:          AccountStatusActive,
 		CreatedAt:       now,
-		UpdatedAt:     now,
+		UpdatedAt:       now,
 		Wallet:          []*Transaction{},
 	}
 }
@@ -88,4 +89,22 @@ type TransferOutput struct {
 	Payer        *Transaction
 	Payee        *Transaction
 	CorrelatedID uuid.UUID
+}
+
+type ResumeAccount struct {
+	ID              uuid.UUID
+	AccountType     AccountType
+	Email           string
+	Status          AccountStatus
+	Salt            string
+	PasswordEncoded string
+}
+
+func (a *ResumeAccount) ValidatePassword(pass string) error {
+	return nil
+}
+
+func (a *ResumeAccount) JsonRawMessage() json.RawMessage {
+	raw, _ := json.Marshal(map[string]string{"account_id": a.ID.String()})
+	return raw
 }
