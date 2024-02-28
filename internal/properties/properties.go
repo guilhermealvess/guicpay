@@ -11,7 +11,8 @@ import (
 
 type props struct {
 	TransactionTimeout     time.Duration `env:"TRANSACTION_TIMEOUT,default=5s"`
-	Port                   int           `env:"APP_PORT,default=3000"`
+	RestPort               int           `env:"APP_PORT,default=3000"`
+	GRPCPort               int           `env:"GRPC_PORT,default=5000"`
 	RedisAddress           string        `env:"REDIS_ADDRESS"`
 	AuthorizeServiceURL    string        `env:"AUTHORIZE_SERVICE_URL"`
 	NotificationServiceURL string        `env:"NOTIFICATION_SERVICE_URL"`

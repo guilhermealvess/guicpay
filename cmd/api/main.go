@@ -9,6 +9,7 @@ import (
 	"github.com/guilhermealvess/guicpay/infra/mutex"
 	"github.com/guilhermealvess/guicpay/infra/repository"
 	"github.com/guilhermealvess/guicpay/infra/service"
+	grpcport "github.com/guilhermealvess/guicpay/interface/grpc_port"
 	"github.com/guilhermealvess/guicpay/interface/http"
 	"github.com/guilhermealvess/guicpay/internal/database"
 	"github.com/guilhermealvess/guicpay/internal/properties"
@@ -37,7 +38,12 @@ func main() {
 	server := http.NewServer(handler)
 	server.Use(middleware.Logger())
 	server.Use(middleware.RequestID())
-	server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", properties.Props.Port)))
+	go func() {
+		server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", properties.Props.RestPort)))
+	}()
+
+	grpcApp := grpcport.NewApp(usecase)
+	grpcApp.Start(properties.Props.GRPCPort)
 	close(queue)
 }
 

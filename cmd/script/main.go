@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,14 +14,18 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/guilhermealvess/guicpay/domain/entity"
+	"github.com/guilhermealvess/guicpay/pkg/pb"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const baseURL = "http://localhost:8080/api/accounts"
 
 var logger *zap.Logger
 
-func main() {
+func run() {
 	l, err := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)
@@ -201,4 +206,39 @@ func (a *Accounts) GetRandomID(k int) string {
 	rand.Seed(time.Now().UnixNano())
 	idx := rand.Intn(len(a.ids) / k)
 	return a.ids[idx]
+}
+
+const (
+	defaultName = "world"
+)
+
+var (
+	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+	name = flag.String("name", defaultName, "Name to greet")
+)
+
+func main() {
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewAccountsClient(conn)
+
+	r, err := c.Create(context.Background(), &pb.CreateAccountRequest{
+		CustomerName:   "PayPal",
+		DocumentNumber: "1234567891045",
+		PhoneNumber:    gofakeit.Phone(),
+		Email:          gofakeit.Email(),
+		Password:       "asd54a9sda9sd4ad",
+		AccountType:    string(entity.Seller),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(r.Id)
 }

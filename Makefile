@@ -13,3 +13,6 @@ docker-run:
 
 ping:
 	- curl http://localhost:8080/api/ping
+
+gen-proto:
+	- protoc --go_out=. --go-grpc_out=. pkg/pb/*.proto
