@@ -5,6 +5,7 @@ import (
 	"time"
 
 	env "github.com/Netflix/go-env"
+	"github.com/guilhermealvess/guicpay/internal/token"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -17,6 +18,10 @@ type props struct {
 	NotificationServiceURL string        `env:"NOTIFICATION_SERVICE_URL"`
 	SnapshotWalletSize     int           `env:"SNAPSHOT_WALLET_SIZE,default=10"`
 	DatabaseURL            string        `env:"DATABASE_URL"`
+	JWT                    struct {
+		Secret string        `env:"JWT_SECRET"`
+		Expire time.Duration `env:"JWT_TOKEN_EXPIRE,default=3600s"`
+	}
 }
 
 var Props props
@@ -25,4 +30,6 @@ func init() {
 	if _, err := env.UnmarshalFromEnviron(&Props); err != nil {
 		log.Fatal(err)
 	}
+
+	token.InitJWT(Props.JWT.Secret, Props.JWT.Expire)
 }

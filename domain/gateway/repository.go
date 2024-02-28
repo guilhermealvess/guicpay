@@ -15,6 +15,8 @@ type AccountRepository interface {
 	SaveAtomicTransactions(ctx context.Context, transactions ...entity.Transaction) error
 	FindAll(ctx context.Context) ([]*entity.Account, error)
 	SetSnapshotTransactions(ctx context.Context, snapshotID uuid.UUID, transactionIDs uuid.UUIDs) error
+	FindAccountByEmail(ctx context.Context, email string) (*entity.Account, error)
+	FindResumeAccount(ctx context.Context, email string) (*entity.ResumeAccount, error)
 }
 
 type Tx interface {
