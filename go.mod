@@ -7,6 +7,7 @@ require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/go-playground/validator/v10 v10.18.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
@@ -34,7 +35,6 @@ require (
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
