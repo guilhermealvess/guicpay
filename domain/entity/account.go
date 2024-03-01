@@ -28,8 +28,7 @@ type Account struct {
 	CustomerName    string
 	DocumentNumber  string
 	Email           string
-	PasswordEncoded string
-	Salt            string
+	PasswordEncoded Password
 	PhoneNumber     string
 	Status          AccountStatus
 	CreatedAt       time.Time
@@ -45,7 +44,7 @@ func NewAccount(t AccountType, name, doc, email, pass, phone string) Account {
 		CustomerName:    name,
 		DocumentNumber:  doc,
 		Email:           email,
-		PasswordEncoded: pass + pass,
+		PasswordEncoded: generatePasswordEncoded(pass),
 		PhoneNumber:     phone,
 		Status:          AccountStatusActive,
 		CreatedAt:       now,
@@ -96,12 +95,11 @@ type ResumeAccount struct {
 	AccountType     AccountType
 	Email           string
 	Status          AccountStatus
-	Salt            string
-	PasswordEncoded string
+	PasswordEncoded Password
 }
 
 func (a *ResumeAccount) ValidatePassword(pass string) error {
-	return nil
+	return a.PasswordEncoded.Compare(pass)
 }
 
 func (a *ResumeAccount) JsonRawMessage() json.RawMessage {

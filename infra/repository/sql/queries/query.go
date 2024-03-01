@@ -44,7 +44,6 @@ func (q *Queries) FindAccountByID(ctx context.Context, id uuid.UUID) (*FindAccou
 		ac.document_number, 
 		ac.email, 
 		ac.password_encoded, 
-		ac.salt_hash_password, 
 		ac.phone_number, 
 		ac.status, 
 		ac.created_at, 
@@ -71,7 +70,6 @@ type SaveAccountParams struct {
 	DocumentNumber  string    `db:"document_number" json:"document_number"`
 	Email           string    `db:"email" json:"email"`
 	PasswordEncoded string    `db:"password_encoded" json:"password_encoded"`
-	SaltHash        string    `db:"salt_hash_password" json:"salt_hash_password"`
 	PhoneNumber     string    `db:"phone_number" json:"phone_number"`
 	Status          string    `db:"status" json:"status"`
 	CreatedAt       time.Time `db:"created_at" json:"created_at"`
@@ -80,9 +78,9 @@ type SaveAccountParams struct {
 
 func (q *Queries) SaveAccount(ctx context.Context, params SaveAccountParams) error {
 	const query = `
-	INSERT INTO accounts (id,account_type,customer_name,document_number,email,password_encoded,salt_hash_password,phone_number,status,created_at,updated_at) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);`
-	_, err := q.db.ExecContext(ctx, query, params.ID, params.AccountType, params.CustomerName, params.DocumentNumber, params.Email, params.PasswordEncoded, params.SaltHash, params.PhoneNumber, params.Status, params.CreatedAt, params.UpdatedAt)
+	INSERT INTO accounts (id,account_type,customer_name,document_number,email,password_encoded,phone_number,status,created_at,updated_at) 
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);`
+	_, err := q.db.ExecContext(ctx, query, params.ID, params.AccountType, params.CustomerName, params.DocumentNumber, params.Email, params.PasswordEncoded, params.PhoneNumber, params.Status, params.CreatedAt, params.UpdatedAt)
 	return err
 }
 
@@ -110,7 +108,6 @@ func (q *Queries) FindAll(ctx context.Context) ([]*FindAccountRow, error) {
 		ac.document_number, 
 		ac.email, 
 		ac.password_encoded, 
-		ac.salt_hash_password, 
 		ac.phone_number, 
 		ac.status, 
 		ac.created_at, 
@@ -165,7 +162,6 @@ func (q *Queries) FindAccountByEmail(ctx context.Context, email string) (*FindAc
 		ac.document_number, 
 		ac.email, 
 		ac.password_encoded, 
-		ac.salt_hash_password, 
 		ac.phone_number, 
 		ac.status, 
 		ac.created_at, 
@@ -184,7 +180,7 @@ func (q *Queries) FindAccountByEmail(ctx context.Context, email string) (*FindAc
 }
 
 func (q *Queries) FindResumeAccount(ctx context.Context, email string) (*ResumeAccount, error) {
-	const query = `SELECT id, account_type, status, email, password_encoded, salt_hash_password FROM accounts WHERE email = $1`
+	const query = `SELECT id, account_type, status, email, password_encoded FROM accounts WHERE email = $1`
 	var row ResumeAccount
 	if err := q.db.GetContext(ctx, &row, query, email); err != nil {
 		return nil, err

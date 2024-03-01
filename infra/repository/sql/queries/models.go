@@ -13,7 +13,6 @@ type Account struct {
 	DocumentNumber  string    `db:"document_number" json:"document_number"`
 	Email           string    `db:"email" json:"email"`
 	PasswordEncoded string    `db:"password_encoded" json:"password_encoded"`
-	Salt            string    `db:"salt_hash_password" json:"salt"`
 	PhoneNumber     string    `db:"phone_number" json:"phone_number"`
 	Status          string    `db:"status" json:"status"`
 	CreatedAt       time.Time `db:"created_at" json:"created_at"`
@@ -36,5 +35,4 @@ type ResumeAccount struct {
 	Status      string    `db:"status" json:"status"`
 	Email       string    `db:"email" json:"email"`
 	Password    string    `db:"password_encoded" json:"password_encoded"`
-	Salt        string    `db:"salt_hash_password" json:"salt"`
 }

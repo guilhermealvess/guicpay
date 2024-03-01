@@ -11,12 +11,11 @@ import (
 func NewServer(h *accountHandler) *echo.Echo {
 	server := echo.New()
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
-
-	api := server.Group("/api")
-	api.GET("/ping", func(c echo.Context) error {
+	server.GET("/ping", func(c echo.Context) error {
 		return c.String(http.StatusOK, "PONG\n")
 	})
 
+	api := server.Group("/api")
 	api.POST("/accounts", h.CreateAccount)
 	api.GET("/accounts", h.List, validateToken)
 	api.GET("/accounts/me", h.Fetch, validateToken)
