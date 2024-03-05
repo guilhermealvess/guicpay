@@ -16,3 +16,6 @@ ping:
 
 gen-proto:
 	- protoc --go_out=. --go-grpc_out=. pkg/pb/*.proto
+
+test:
+	go test -covermode=count -coverprofile=count.out ./...
