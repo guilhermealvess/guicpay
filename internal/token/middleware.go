@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-func Middle(tokenString string, target any) error {
+func Middleware(tokenString string, target any) error {
 	if tokenString == "" {
-		return errors.New("TODO:")
+		return errors.New("token invalid")
 	}
 
 	parts := strings.Split(tokenString, " ")
 	if len(parts) < 2 || parts[0] != "Bearer" {
-		return errors.New("TODO:")
+		return errors.New("token invalid")
 	}
 
 	tokenString = parts[1]

@@ -23,7 +23,7 @@ func validateToken(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		var payload Payload
-		if err := token.Middle(tokenString, &payload); err != nil {
+		if err := token.Middleware(tokenString, &payload); err != nil {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 

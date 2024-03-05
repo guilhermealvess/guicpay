@@ -40,11 +40,11 @@ func (s *authorizationService) Authorize(ctx context.Context, account entity.Acc
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
-		return fmt.Errorf("TODO: ... %w", err)
+		return fmt.Errorf("authorization_service: serialize data, %w", err)
 	}
 
 	if data["message"] != true {
-		return errors.New("TODO:")
+		return errors.Join(errors.New("authorization_service: not authorized"), entity.ErrUnprocessableEntity)
 	}
 
 	return nil

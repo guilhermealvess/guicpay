@@ -13,6 +13,7 @@ import (
 	"github.com/guilhermealvess/guicpay/interface/http"
 	"github.com/guilhermealvess/guicpay/internal/database"
 	"github.com/guilhermealvess/guicpay/internal/properties"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	queue, snapshotBackgroundWorker := buildSnapShotWorker()
 
 	// Gateway
-	repo := repository.NewAccountRepository(database.NewConnectionDB())
+	repo := repository.NewAccountRepository(database.NewConnectionDB(properties.Props.DatabaseURL))
 	mu := mutex.NewMutex(properties.Props.RedisAddress, "")
 	notificationService := service.NewNotificationService(properties.Props.NotificationServiceURL)
 	authService := service.NewAuthorizationService(properties.Props.AuthorizeServiceURL)
@@ -38,6 +39,14 @@ func main() {
 	server := http.NewServer(handler)
 	server.Use(middleware.Logger())
 	server.Use(middleware.RequestID())
+	server.Use(middleware.Recover())
+	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{
+			echo.GET, echo.PATCH, echo.POST, echo.DELETE,
+		},
+	}))
+
 	go func() {
 		server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", properties.Props.RestPort)))
 	}()

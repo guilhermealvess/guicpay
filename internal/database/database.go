@@ -4,13 +4,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/guilhermealvess/guicpay/internal/properties"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // driver postgres
 )
 
-func NewConnectionDB() *sqlx.DB {
-	db, err := sqlx.Open("postgres", properties.Props.DatabaseURL)
+func NewConnectionDB(conn string) *sqlx.DB {
+	db, err := sqlx.Open("postgres", conn)
 	if err != nil {
 		log.Panicf("failed to connect on database: %v", err)
 	}

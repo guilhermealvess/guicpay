@@ -1,12 +1,12 @@
 package entity
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/guilhermealvess/guicpay/domain/common"
 )
 
 type Money int64
@@ -47,8 +47,8 @@ func (p *Password) Compare(input string) error {
 
 	switch method {
 	case "SHA256":
-		if password != computeSHA256Hash(input+salt) {
-			return errors.New("TODO: password invalid")
+		if password != common.ComputeSHA256Hash(input+salt) {
+			return errors.New("password invalid")
 		}
 	}
 
@@ -57,15 +57,7 @@ func (p *Password) Compare(input string) error {
 
 func generatePasswordEncoded(password string) Password {
 	method := "SHA256"
-	salt := computeSHA256Hash(fmt.Sprintf("%d", time.Now().UnixNano()))
-	pass := computeSHA256Hash(password + salt)
+	salt := common.ComputeSHA256Hash(fmt.Sprintf("%d", time.Now().UnixNano()))
+	pass := common.ComputeSHA256Hash(password + salt)
 	return Password(fmt.Sprintf("%s:%s:%s", method, salt, pass))
-}
-
-func computeSHA256Hash(input string) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(input))
-	hashSum := hasher.Sum(nil)
-	hashString := hex.EncodeToString(hashSum)
-	return hashString
 }

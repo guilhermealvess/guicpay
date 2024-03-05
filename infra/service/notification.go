@@ -39,7 +39,7 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("TODO: ... %w", err)
+		return fmt.Errorf("notification_service: read response, %w", err)
 	}
 
 	var data struct {
@@ -47,11 +47,11 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 	}
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		return fmt.Errorf("service_error: ..., %w", err)
+		return fmt.Errorf("notification_service: serialize data, %w", err)
 	}
 
 	if data.Message != "Autorizado" {
-		return errors.New(data.Message)
+		return errors.Join(fmt.Errorf("notification_service: %s", data.Message), entity.ErrUnprocessableEntity)
 	}
 
 	return nil
