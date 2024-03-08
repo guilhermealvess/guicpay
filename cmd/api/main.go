@@ -45,6 +45,10 @@ func main() {
 		AllowMethods: []string{
 			echo.GET, echo.PATCH, echo.POST, echo.DELETE,
 		},
+		AllowHeaders: []string{
+			echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept,
+			echo.HeaderAuthorization,
+		},
 	}))
 
 	go func() {

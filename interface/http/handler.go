@@ -39,7 +39,10 @@ func (h *accountHandler) Auth(c echo.Context) error {
 
 	raw := account.JsonRawMessage()
 	t, err := token.JWT.Generate(raw)
-	return buildResponse(c, err, t, http.StatusCreated)
+	response := map[string]string{
+		"token": t,
+	}
+	return buildResponse(c, err, response, http.StatusCreated)
 }
 
 func (h *accountHandler) CreateAccount(c echo.Context) error {
