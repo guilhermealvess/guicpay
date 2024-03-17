@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/guilhermealvess/guicpay/domain/entity"
@@ -15,35 +13,31 @@ import (
 )
 
 type authorizationService struct {
-	client  clienthttp.ClientHttp
-	baseURL string
+	client clienthttp.HTTPClient
 }
 
 func NewAuthorizationService(baseURL string) gateway.AuthorizationService {
 	return &authorizationService{
-		client:  clienthttp.NewClient(),
-		baseURL: baseURL,
+		client: clienthttp.NewHTTPClient(baseURL),
 	}
 }
 
 func (s *authorizationService) Authorize(ctx context.Context, account entity.Account) error {
-	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "Authorize")
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "AuthorizationService.Auth")
 	defer span.End()
 
-	url := s.baseURL + "/auth"
-	res, err := s.client.Send(ctx, http.MethodGet, url, nil, nil)
+	const endpoint = "/auth"
+	res, err := s.client.Request(ctx, http.MethodPost, endpoint, clienthttp.WithPayload(account))
 	if err != nil {
 		return err
 	}
 
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
+	if err := res.Error(); err != nil {
 		return err
 	}
 
 	var data map[string]interface{}
-	if err := json.Unmarshal(body, &data); err != nil {
+	if err := res.Bind(&data); err != nil {
 		return fmt.Errorf("TODO: ... %w", err)
 	}
 

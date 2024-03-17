@@ -4,42 +4,79 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
-	"net/url"
 )
 
-type ClientHttp interface {
-	Send(ctx context.Context, method, url string, query url.Values, bodyJSON json.RawMessage, pathParams ...string) (*http.Response, error)
-	Bind(res *http.Response, v interface{}) error
+type HTTPClient interface {
+	Request(ctx context.Context, method string, url string, options ...RequestOptions) (*Response, error)
 }
 
-type clientHttp struct {
-	client http.Client
-}
+type RequestOptions func(req *http.Request)
 
-func NewClient() ClientHttp {
-	return &clientHttp{
-		client: *http.DefaultClient,
+func WithPayload(v any) RequestOptions {
+	return func(req *http.Request) {
+		body, _ := json.Marshal(v)
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
 	}
 }
 
-func (c *clientHttp) Send(ctx context.Context, method, url string, query url.Values, bodyJSON json.RawMessage, pathParams ...string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(bodyJSON))
+type httpClient struct {
+	baseURL string
+}
+
+func NewHTTPClient(baseURL string) HTTPClient {
+	return &httpClient{
+		baseURL: baseURL,
+	}
+}
+
+func (c *httpClient) Request(ctx context.Context, method string, url string, options ...RequestOptions) (*Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	return c.client.Do(req)
-}
+	for _, opt := range options {
+		opt(req)
+	}
 
-func (r *clientHttp) Bind(res *http.Response, v interface{}) error {
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return json.Unmarshal(body, v)
+	return &Response{
+		Content:  body,
+		Response: res,
+	}, nil
+}
+
+type Response struct {
+	Content  []byte
+	Response *http.Response
+}
+
+func (r *Response) Bind(v interface{}) error {
+	return json.Unmarshal(r.Content, v)
+}
+
+func (r *Response) Error() error {
+	if r.Response.StatusCode >= 400 && r.Response.StatusCode < 500 {
+		return errors.New("client error")
+	}
+
+	if r.Response.StatusCode >= 500 {
+		return errors.New("server error")
+	}
+
+	return nil
 }

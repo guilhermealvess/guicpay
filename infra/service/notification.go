@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/guilhermealvess/guicpay/domain/entity"
@@ -15,43 +13,39 @@ import (
 )
 
 type notificationService struct {
-	clientHttp clienthttp.ClientHttp
-	baseURL    string
+	clientHttp clienthttp.HTTPClient
 }
 
 func NewNotificationService(baseURL string) gateway.NotificationService {
 	return &notificationService{
-		clientHttp: clienthttp.NewClient(),
-		baseURL:    baseURL,
+		clientHttp: clienthttp.NewHTTPClient(baseURL),
 	}
 }
 
 func (s *notificationService) Notify(ctx context.Context, account entity.Account, transaction entity.Transaction) error {
-	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "Notify")
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "NotificationService.Notify")
 	defer span.End()
 
-	url := s.baseURL + "/dispatch"
+	const endpoint = "/dispatch"
 	payload := map[string]string{
 		"message": fmt.Sprintf("%s, você recebeu uma nova transferência no valor de %s", account.CustomerName, transaction.Amount.String()),
 	}
-	raw, _ := json.Marshal(payload)
-	res, err := s.clientHttp.Send(ctx, http.MethodGet, url, nil, raw)
+
+	res, err := s.clientHttp.Request(ctx, http.MethodPost, endpoint, clienthttp.WithPayload(payload))
 	if err != nil {
 		return err
 	}
 
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("TODO: ... %w", err)
+	if err := res.Error(); err != nil {
+		return err
 	}
 
 	var data struct {
 		Message string `json:"message"`
 	}
 
-	if err := json.Unmarshal(body, &data); err != nil {
-		return fmt.Errorf("service_error: ..., %w", err)
+	if err := res.Bind(&data); err != nil {
+		return fmt.Errorf("notification error: %w", err)
 	}
 
 	if data.Message != "Autorizado" {

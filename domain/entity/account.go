@@ -69,6 +69,10 @@ func (a *Account) Transfer(payee *Account, v Money) (*TransferOutput, error) {
 		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("account seller cant make transfer", a.ID, v))
 	}
 
+	if a.ID == payee.ID {
+		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("account cant transfer to itself", a.ID, v))
+	}
+
 	if a.Wallet.Balance() < v {
 		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("insuficient balance", a.ID, v))
 	}
