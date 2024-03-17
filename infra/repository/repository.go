@@ -10,6 +10,7 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 	"github.com/guilhermealvess/guicpay/infra/repository/sql/queries"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel"
 )
 
 type repositoryBase struct {
@@ -35,6 +36,8 @@ func NewAccountRepository(db *sqlx.DB) gateway.AccountRepository {
 }
 
 func (r *accountRepository) CreateAccount(ctx context.Context, account entity.Account) error {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "CreateAccount")
+	defer span.End()
 	return r.queries.SaveAccount(ctx, queries.SaveAccountParams{
 		ID:              account.ID,
 		CustomerName:    account.CustomerName,
@@ -101,6 +104,8 @@ func (r *accountRepository) FindAccountByIDs(ctx context.Context, ids ...uuid.UU
 }
 
 func (r *accountRepository) SaveAtomicTransactions(ctx context.Context, transactions ...entity.Transaction) error {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "SaveAtomicTransactions")
+	defer span.End()
 	ch := make(chan error)
 	for _, t := range transactions {
 		go func(transaction entity.Transaction) {

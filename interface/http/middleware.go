@@ -15,7 +15,7 @@ type Payload struct {
 	AccountType string    `json:"account_type"`
 }
 
-func validateToken(next echo.HandlerFunc) echo.HandlerFunc {
+func validateTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenString := c.Request().Header.Get("Authorization")
 		if tokenString == "" {

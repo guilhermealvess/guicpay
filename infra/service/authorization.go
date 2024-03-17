@@ -11,6 +11,7 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 	clienthttp "github.com/guilhermealvess/guicpay/internal/client_http"
+	"go.opentelemetry.io/otel"
 )
 
 type authorizationService struct {
@@ -26,6 +27,9 @@ func NewAuthorizationService(baseURL string) gateway.AuthorizationService {
 }
 
 func (s *authorizationService) Authorize(ctx context.Context, account entity.Account) error {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "Authorize")
+	defer span.End()
+
 	url := s.baseURL + "/auth"
 	res, err := s.client.Send(ctx, http.MethodGet, url, nil, nil)
 	if err != nil {

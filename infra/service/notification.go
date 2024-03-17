@@ -11,6 +11,7 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 	clienthttp "github.com/guilhermealvess/guicpay/internal/client_http"
+	"go.opentelemetry.io/otel"
 )
 
 type notificationService struct {
@@ -26,6 +27,9 @@ func NewNotificationService(baseURL string) gateway.NotificationService {
 }
 
 func (s *notificationService) Notify(ctx context.Context, account entity.Account, transaction entity.Transaction) error {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "Notify")
+	defer span.End()
+
 	url := s.baseURL + "/dispatch"
 	payload := map[string]string{
 		"message": fmt.Sprintf("%s, você recebeu uma nova transferência no valor de %s", account.CustomerName, transaction.Amount.String()),

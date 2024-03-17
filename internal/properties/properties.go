@@ -22,6 +22,7 @@ type props struct {
 		Secret string        `env:"JWT_SECRET"`
 		Expire time.Duration `env:"JWT_TOKEN_EXPIRE,default=3600s"`
 	}
+	TraceCollectorURL string `env:"TRACE_COLLECTOR_URL"`
 }
 
 var Props props
