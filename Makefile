@@ -12,7 +12,7 @@ docker-run:
 	- docker-compose up -d
 
 ping:
-	- curl http://localhost:8080/api/ping
+	- curl http://localhost:8080/ping
 
 gen-proto:
 	- protoc --go_out=. --go-grpc_out=. pkg/pb/*.proto

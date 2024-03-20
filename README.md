@@ -8,13 +8,13 @@ Este projeto é uma implementação simplificada do backend do PicPay, desenvolv
 
 </div>
 
-## Stack
+## Stack 🔋
 
-- **Golang**: Linguagem de programação, compilada, rápida, multi-paradigmas e concorrente.
-- **PostgreSQL**: Banco de dados SQL utilizado para armazenar dados persistentes, usufruindo da capacidade de transações atômicas garantindo consistência.
-- **Redis**: Sistema de armazenamento em cache atuando como um serviço de lock distribuído.
-- **DDD (Domain-Driven Design)**: Metodologia para organizar o código em torno das regras de negócio, onde a modelagem do problema é o mais importante.
-- **Clean Architecture**: Estrutura de código que enfatiza a separação de responsabilidades e a independência das camadas e não dependendo de framework.
+- **[Golang](https://go.dev/)**: Linguagem de programação, compilada, rápida, multi-paradigmas e concorrente.
+- **[PostgreSQL](https://www.postgresql.org/)**: Banco de dados SQL utilizado para armazenar dados persistentes, usufruindo da capacidade de transações atômicas garantindo consistência.
+- **[Redis](https://redis.io/)**: Sistema de armazenamento em cache atuando como um serviço de lock distribuído.
+- **[DDD](https://www.zup.com.br/blog/domain-driven-design-ddd) (Domain-Driven Design)**: Metodologia para organizar o código em torno das regras de negócio, onde a modelagem do problema é o mais importante.
+- **[Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)**: Estrutura de código que enfatiza a separação de responsabilidades e a independência das camadas e não dependendo de framework.
 
 
 ## Modelagem de Domínio
@@ -32,7 +32,7 @@ A imagem acima ilustra a modelagem de domínio do GuicPay simplificado. Cada ent
 
 <div align="center">
 
-![Arquitetura do Sistema](./assets/arch_api_dark.png)
+![alt text](./assets/arch.png)
 
 </div>
 
@@ -43,7 +43,7 @@ A arquitetura do sistema é projetada para ser modular e escalável. Cada camada
 
 <div align="center">
 
-![Clean Architecture](./assets/1_O4pMWCi5kZi20SNOR6V33Q.png)
+![Clean Architecture](./assets/clean_arch.png)
 
 </div>
 
@@ -65,5 +65,5 @@ curl http://localhost:8080/api/ping
 
 ## Documentação 
 
-Para acessar a documentação OpenAPI basta acessar a rota `/docs` .
+Para acessar a documentação OpenAPI basta acessar a rota `/docs/` .
 
