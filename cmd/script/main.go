@@ -1,133 +1,123 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"flag"
 	"fmt"
-	"io"
-	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/guilhermealvess/guicpay/domain/entity"
-	"github.com/guilhermealvess/guicpay/pkg/pb"
+	"github.com/guilhermealvess/guicpay/domain/usecase"
+	clienthttp "github.com/guilhermealvess/guicpay/internal/client_http"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-const baseURL = "http://localhost:8080/api/accounts"
+var (
+	client     clienthttp.HTTPClient
+	accountMap sync.Map
+	m          = &manager{}
+	logger     *zap.Logger
+)
 
-var logger *zap.Logger
+const (
+	baseURL = "http://localhost:8080/api/accounts"
+	k       = 3
+	n       = 50
+)
 
-func run() {
-	l, err := zap.NewProduction()
+func init() {
+	client = clienthttp.NewHTTPClient("http://localhost:8080/api")
+	accountMap = sync.Map{}
+	logger, _ = zap.NewProduction()
+}
+
+type pair struct {
+	payer, payee string
+}
+
+type manager struct {
+	mu  sync.Mutex
+	ids []string
+}
+
+func (m *manager) Register(id string) {
+	m.mu.Lock()
+	m.ids = append(m.ids, id)
+	m.mu.Unlock()
+}
+
+func (m *manager) GetRandomID(v int) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	idx := randRange(0, int(len(m.ids)/v)+1)
+	return m.ids[idx]
+}
+
+func main() {
+	go func() {
+		for {
+			time.Sleep(time.Second / k)
+
+			for range k {
+				payload := usecase.NewAccountInput{
+					Name:           gofakeit.Name(),
+					Email:          gofakeit.Email(),
+					Password:       gofakeit.Password(true, true, true, true, false, 10),
+					Type:           "PERSONAL",
+					DocumentNumber: fmt.Sprintf("%d", gofakeit.Number(11111111111, 99999999999)),
+					PhoneNumber:    gofakeit.Phone(),
+				}
+
+				id, err := NewAccount(payload)
+				if err != nil {
+					logger.Error("Error creating account", zap.Error(err))
+					continue
+				}
+
+				token, err := Authenticate(payload)
+				if err != nil {
+					logger.Error("Error authenticating account", zap.Error(err))
+					continue
+				}
+
+				accountMap.Store(id, token)
+				m.Register(id)
+			}
+		}
+	}()
+
+	time.Sleep(time.Second * 5)
+
+	ch := make(chan string, n)
+	go ExecuteDepositLoop(ch)
+	go func() {
+		for {
+			ch <- m.GetRandomID(k)
+		}
+	}()
+
+	chTransfer := make(chan pair, n)
+	go ExecuteTransferLoop(chTransfer)
+	go func() {
+		for {
+			arr := pair{payer: m.GetRandomID(k), payee: m.GetRandomID(k)}
+			chTransfer <- arr
+		}
+	}()
+
+	<-time.After(time.Minute)
+}
+
+func NewAccount(payload usecase.NewAccountInput) (string, error) {
+	res, err := client.Request(context.Background(), http.MethodPost, "/accounts", clienthttp.WithPayload(payload))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	logger = l
-	a := Accounts{}
-
-	go func() {
-		for {
-			for i := 0; i < 3; i++ {
-				go CreateAccount(&a)
-			}
-			time.Sleep(time.Second / 3)
-		}
-	}()
-
-	time.Sleep(time.Second)
-	ch := make(chan string, 7*8)
-	go DepositAccount(ch)
-	go func() {
-		for {
-			ch <- a.GetRandomID(3)
-		}
-	}()
-
-	chTr := make(chan []string, 15*8)
-	go Transfer(chTr)
-	go func() {
-		for {
-			arr := []string{
-				a.GetRandomID(5),
-				a.GetRandomID(5),
-			}
-
-			if arr[0] == arr[1] {
-				continue
-			}
-
-			chTr <- arr
-		}
-	}()
-
-	for {
-	}
-}
-
-func Transfer(ch chan []string) {
-	for i := 0; i < 15*8; i++ {
-		go func() {
-			for arr := range ch {
-				payer, payee := arr[0], arr[1]
-				payload := map[string]any{
-					"value": float64(rand.Intn(100000)) + rand.Float64(),
-					"payee": payee,
-				}
-				res, _ := request(context.Background(), http.MethodPost, fmt.Sprintf("%s/%s/transfer", baseURL, payer), payload)
-				var data struct {
-					ID string `json:"transaction_id"`
-				}
-				res.Bind(&data)
-				logger.Info("Transfer OK", zap.String("transaction_id", data.ID), zap.String("payer", payer), zap.String("payee", payee))
-			}
-		}()
-	}
-}
-
-func DepositAccount(ch chan string) {
-	for i := 0; i < 7*8; i++ {
-		go func() {
-			for id := range ch {
-				rand.Seed(time.Now().UnixNano())
-				payload := map[string]float64{
-					"value": float64(rand.Intn(100000)) + rand.Float64(),
-				}
-				res, _ := request(context.Background(), http.MethodPost, fmt.Sprintf("%s/%s/deposit", baseURL, id), payload)
-
-				var data struct {
-					ID string `json:"transaction_id"`
-				}
-				res.Bind(&data)
-				logger.Info("Deposit OK", zap.String("transaction_id", data.ID), zap.String("id", id))
-			}
-		}()
-	}
-
-}
-
-func CreateAccount(a *Accounts) {
-	payload := map[string]string{
-		"customer_name":   gofakeit.Name(),
-		"email":           gofakeit.Email(),
-		"password":        gofakeit.Password(true, true, true, true, false, 20),
-		"account_type":    "PERSONAL",
-		"document_number": fmt.Sprintf("%d", gofakeit.Number(11111111111, 99999999999)),
-		"phone_number":    gofakeit.Phone(),
-	}
-
-	res, err := request(context.Background(), http.MethodPost, baseURL, payload)
-	if err != nil {
-		logger.Error("error in create account", zap.Error(err))
-		return
+	if err := res.Error(); err != nil {
+		return "", err
 	}
 
 	var data struct {
@@ -135,110 +125,110 @@ func CreateAccount(a *Accounts) {
 	}
 
 	if err := res.Bind(&data); err != nil {
-		logger.Error("error in create account", zap.Error(err))
-		return
+		return "", err
 	}
 
-	a.AppendID(data.ID)
-	logger.Info("Account created", zap.String("account_id", data.ID), zap.String("name", payload["customer_name"]), zap.String("email", payload["email"]))
+	return data.ID, nil
 }
 
-func request(ctx context.Context, method, url string, payload any) (*ClientResponse, error) {
-	var body io.Reader
-	if payload != nil {
-		raw, _ := json.Marshal(payload)
-		body = bytes.NewBuffer(json.RawMessage(raw))
+func randRange(min, max int) int {
+	return rand.IntN(max-min) + min
+}
+
+func ExecuteDepositLoop(ch <-chan string) {
+	for range n {
+		go func() {
+			for id := range ch {
+				payload := map[string]interface{}{
+					"value": gofakeit.Number(100, 1000),
+				}
+
+				token, ok := accountMap.Load(id)
+				if !ok {
+					continue
+				}
+
+				res, err := client.Request(context.Background(), http.MethodPost, "/transactions/deposit", clienthttp.WithPayload(payload), clienthttp.WithToken(token.(string)))
+				if err != nil {
+					continue
+				}
+
+				if err := res.Error(); err != nil {
+					continue
+				}
+
+				var data struct {
+					ID string `json:"transaction_id"`
+				}
+
+				if err := res.Bind(&data); err != nil {
+					continue
+				}
+
+				logger.Info("Deposit OK", zap.String("transaction_id", data.ID), zap.String("account_id", id))
+			}
+		}()
+	}
+}
+
+func ExecuteTransferLoop(ch <-chan pair) {
+	for range n {
+		go func() {
+			for pair := range ch {
+				payload := map[string]interface{}{
+					"value": gofakeit.Number(100, 1000),
+					"payee": pair.payee,
+				}
+
+				token, ok := accountMap.Load(pair.payer)
+				if !ok {
+					continue
+				}
+
+				res, err := client.Request(context.Background(), http.MethodPost, "/transactions/transfer", clienthttp.WithPayload(payload), clienthttp.WithToken(token.(string)))
+				if err != nil {
+					continue
+				}
+
+				if err := res.Error(); err != nil {
+					continue
+				}
+
+				var data struct {
+					ID string `json:"transaction_id"`
+				}
+
+				if err := res.Bind(&data); err != nil {
+					continue
+				}
+
+				logger.Info("Transfer OK", zap.String("transaction_id", data.ID), zap.String("payer", pair.payer), zap.String("payee", pair.payee))
+			}
+		}()
+	}
+}
+
+func Authenticate(data usecase.NewAccountInput) (string, error) {
+	payload := map[string]interface{}{
+		"email":    data.Email,
+		"password": data.Password,
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	res, err := client.Request(context.Background(), http.MethodPost, "/auth", clienthttp.WithPayload(payload))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	if err := res.Error(); err != nil {
+		return "", err
 	}
 
-	return NewClientResponse(res)
-}
-
-type ClientResponse struct {
-	body       []byte
-	statusCode int
-	headers    http.Header
-}
-
-func NewClientResponse(response *http.Response) (*ClientResponse, error) {
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
+	var token struct {
+		Token string `json:"token"`
+	}
+	if err := res.Bind(&token); err != nil {
+		return "", err
 	}
 
-	defer response.Body.Close()
-	return &ClientResponse{
-		statusCode: response.StatusCode,
-		headers:    response.Header,
-		body:       body,
-	}, nil
-}
-
-func (c *ClientResponse) Bind(v interface{}) error {
-	return json.Unmarshal(c.body, v)
-}
-
-type Accounts struct {
-	mu  sync.Mutex
-	ids []string
-}
-
-func (a *Accounts) AppendID(id string) {
-	a.mu.Lock()
-	a.ids = append(a.ids, id)
-	a.mu.Unlock()
-}
-
-func (a *Accounts) GetRandomID(k int) string {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	rand.Seed(time.Now().UnixNano())
-	idx := rand.Intn(len(a.ids) / k)
-	return a.ids[idx]
-}
-
-const (
-	defaultName = "world"
-)
-
-var (
-	addr = flag.String("addr", "localhost:50051", "the address to connect to")
-	name = flag.String("name", defaultName, "Name to greet")
-)
-
-func main() {
-	flag.Parse()
-	// Set up a connection to the server.
-	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
-
-	c := pb.NewAccountsClient(conn)
-
-	r, err := c.Create(context.Background(), &pb.CreateAccountRequest{
-		CustomerName:   "PayPal",
-		DocumentNumber: "1234567891045",
-		PhoneNumber:    gofakeit.Phone(),
-		Email:          gofakeit.Email(),
-		Password:       "asd54a9sda9sd4ad",
-		AccountType:    string(entity.Seller),
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(r.Id)
+	return token.Token, nil
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -20,6 +21,12 @@ func WithPayload(v any) RequestOptions {
 		body, _ := json.Marshal(v)
 		req.Body = io.NopCloser(bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
+	}
+}
+
+func WithToken(token string) RequestOptions {
+	return func(req *http.Request) {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 }
 

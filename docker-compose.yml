@@ -35,7 +35,7 @@ services:
       - REDIS_ADDRESS=redis:6379
       - DATABASE_URL=postgres://user:password@postgres:5432/db?sslmode=disable
       - JWT_SECRET=SECRET
-      - TRACE_COLLECTOR_URL=http://localhost:9411/api/v2/spans
+      - TRACE_COLLECTOR_URL=http://zipkin:9411/api/v2/spans
     depends_on:
       - redis
       - postgres

@@ -8,12 +8,16 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 	"github.com/guilhermealvess/guicpay/internal/logger"
 	"github.com/guilhermealvess/guicpay/internal/properties"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 )
 
 func (u *accountUseCase) ExecuteTransfer(ctx context.Context, payer, payee uuid.UUID, value uint64) (uuid.UUID, error) {
 	ctx, cancel := context.WithTimeout(ctx, properties.Props.TransactionTimeout)
 	defer cancel()
+
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "AccountUseCase.ExecuteTransfer")
+	defer span.End()
 
 	tx, err := u.repository.NewTransaction(ctx)
 	if err != nil {

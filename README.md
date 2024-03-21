@@ -59,7 +59,7 @@ make docker-run
 ### Health Check
 
 ```sh
-curl http://localhost:8080/api/ping
+curl http://localhost:8080/ping
 ```
 
 
