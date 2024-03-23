@@ -38,7 +38,7 @@ func NewAccountRepository(db *sqlx.DB) gateway.AccountRepository {
 func (r *accountRepository) CreateAccount(ctx context.Context, account entity.Account) error {
 	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "CreateAccount")
 	defer span.End()
-	return r.queries.SaveAccount(ctx, queries.SaveAccountParams{
+	err := r.queries.SaveAccount(ctx, queries.SaveAccountParams{
 		ID:              account.ID,
 		CustomerName:    account.CustomerName,
 		DocumentNumber:  account.DocumentNumber,
@@ -50,11 +50,21 @@ func (r *accountRepository) CreateAccount(ctx context.Context, account entity.Ac
 		CreatedAt:       account.CreatedAt,
 		UpdatedAt:       account.UpdatedAt,
 	})
+
+	if err != nil {
+		span.RecordError(err)
+	}
+
+	return err
 }
 
 func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "FindAccount")
+	defer span.End()
+
 	row, err := r.queries.FindAccountByID(ctx, accountID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
@@ -72,6 +82,7 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 	}
 
 	if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
@@ -79,6 +90,9 @@ func (r *accountRepository) FindAccount(ctx context.Context, accountID uuid.UUID
 }
 
 func (r *accountRepository) FindAccountByIDs(ctx context.Context, ids ...uuid.UUID) (map[uuid.UUID]*entity.Account, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "FindAccountByIDs")
+	defer span.End()
+
 	chError := make(chan error)
 	chAccount := make(chan *entity.Account)
 
@@ -93,6 +107,7 @@ func (r *accountRepository) FindAccountByIDs(ctx context.Context, ids ...uuid.UU
 	result := make(map[uuid.UUID]*entity.Account)
 	for range ids {
 		if err := <-chError; err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("database: %w", err)
 		}
 
@@ -122,6 +137,7 @@ func (r *accountRepository) SaveAtomicTransactions(ctx context.Context, transact
 
 	for range transactions {
 		if err := <-ch; err != nil {
+			span.RecordError(err)
 			return fmt.Errorf("database: %w", err)
 		}
 	}
@@ -130,8 +146,12 @@ func (r *accountRepository) SaveAtomicTransactions(ctx context.Context, transact
 }
 
 func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "FindAll")
+	defer span.End()
+
 	rows, err := r.queries.FindAll(ctx)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -151,6 +171,7 @@ func (r *accountRepository) FindAll(ctx context.Context) ([]*entity.Account, err
 		}
 
 		if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("database: %w", err)
 		}
 
@@ -165,8 +186,12 @@ func (r *accountRepository) SetSnapshotTransactions(ctx context.Context, snapsho
 }
 
 func (r *accountRepository) FindAccountByEmail(ctx context.Context, email string) (*entity.Account, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "FindAccountByEmail")
+	defer span.End()
+
 	row, err := r.queries.FindAccountByEmail(ctx, email)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -184,6 +209,7 @@ func (r *accountRepository) FindAccountByEmail(ctx context.Context, email string
 	}
 
 	if err := json.Unmarshal(row.Transactions, &account.Wallet); err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
@@ -191,8 +217,12 @@ func (r *accountRepository) FindAccountByEmail(ctx context.Context, email string
 }
 
 func (r *accountRepository) FindResumeAccount(ctx context.Context, email string) (*entity.ResumeAccount, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("my-server").Start(ctx, "FindResumeAccount")
+	defer span.End()
+
 	row, err := r.queries.FindResumeAccount(ctx, email)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 

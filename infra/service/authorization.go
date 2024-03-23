@@ -29,20 +29,25 @@ func (s *authorizationService) Authorize(ctx context.Context, account entity.Acc
 	const endpoint = "/auth"
 	res, err := s.client.Request(ctx, http.MethodPost, endpoint, clienthttp.WithPayload(account))
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
 	if err := res.Error(); err != nil {
+		span.RecordError(err)
 		return err
 	}
 
 	var data map[string]interface{}
 	if err := res.Bind(&data); err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("TODO: ... %w", err)
 	}
 
 	if data["message"] != true {
-		return errors.New("TODO:")
+		err := errors.New("TODO:")
+		span.RecordError(err)
+		return err
 	}
 
 	return nil
