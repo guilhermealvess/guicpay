@@ -38,6 +38,8 @@ func main() {
 	server := http.NewServer(handler)
 	server.Use(middleware.Logger())
 	server.Use(middleware.RequestID())
+	server.Use(middleware.Recover())
+	server.Use(middleware.AddTrailingSlash())
 	go func() {
 		server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", properties.Props.RestPort)))
 	}()

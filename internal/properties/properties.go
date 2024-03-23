@@ -23,6 +23,8 @@ type props struct {
 		Expire time.Duration `env:"JWT_TOKEN_EXPIRE,default=3600s"`
 	}
 	TraceCollectorURL string `env:"TRACE_COLLECTOR_URL"`
+	DatabaseMaxConn   int    `env:"DATABASE_MAX_CONN,default=15"`
+	DatabaseMaxIdle   int    `env:"DATABASE_MAX_IDLE,default=15"`
 }
 
 var Props props

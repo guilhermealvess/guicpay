@@ -33,10 +33,12 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 
 	res, err := s.clientHttp.Request(ctx, http.MethodPost, endpoint, clienthttp.WithPayload(payload))
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
 	if err := res.Error(); err != nil {
+		span.RecordError(err)
 		return err
 	}
 
@@ -45,10 +47,12 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 	}
 
 	if err := res.Bind(&data); err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("notification error: %w", err)
 	}
 
 	if data.Message != "Autorizado" {
+		span.RecordError(errors.New(data.Message))
 		return errors.New(data.Message)
 	}
 

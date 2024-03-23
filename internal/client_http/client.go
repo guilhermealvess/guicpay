@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 type HTTPClient interface {
@@ -27,6 +28,18 @@ func WithPayload(v any) RequestOptions {
 func WithToken(token string) RequestOptions {
 	return func(req *http.Request) {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+}
+
+func WithUserAgent(userAgent string) RequestOptions {
+	return func(req *http.Request) {
+		req.Header.Set("user_agent", userAgent)
+	}
+}
+
+func WithQueryParams(params url.Values) RequestOptions {
+	return func(req *http.Request) {
+		req.URL.RawQuery = params.Encode()
 	}
 }
 
