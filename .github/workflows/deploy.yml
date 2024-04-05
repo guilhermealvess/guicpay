@@ -26,13 +26,11 @@ jobs:
           push: true
           tags: guilhermeasilva/guicpay:latest
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy to Docker Swarm
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_HOST }} <<EOF
-          docker service update --image guilhermeasilva/guicpay:latest application_api
-          EOF
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker service update --image guilhermeasilva/guicpay:latest application_api
