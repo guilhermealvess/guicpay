@@ -3,13 +3,13 @@ version: "3.5"
 services:
   postgres:
     image: postgres
+    restart: always
     environment:
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=ozApGB6je7ZbK8wRGOh2zHG0qDfGcTi1yO78ieiQMN7eim2NfW
       - POSTGRES_USER=user
       - POSTGRES_DB=db
     ports:
       - 5432:5432
-    restart: always
     volumes:
       - ./infra/repository/sql:/docker-entrypoint-initdb.d
 
@@ -21,9 +21,9 @@ services:
 
   zipkin:
     image: openzipkin/zipkin
+    restart: always
     ports:
       - 9411:9411
-    restart: always
 
   api:
     build: .

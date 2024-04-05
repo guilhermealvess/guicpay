@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -23,6 +24,7 @@ var (
 )
 
 func main() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	baseURL := os.Getenv("API_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8080/api"
@@ -33,11 +35,15 @@ func main() {
 	}
 
 	logger, _ = zap.NewProduction()
-
 	cicle := make(Cicle, 0)
 
 	for range 10 {
-		account, _ := p.CreateAccount()
+		account, err := p.CreateAccount()
+		if err != nil {
+			logger.Error("Error creating account", zap.Error(err))
+			return
+		}
+
 		ids = append(ids, *account)
 
 		go p.Deposit(*account)

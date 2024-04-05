@@ -26,7 +26,7 @@ func NewServer(h *accountHandler) *echo.Echo {
 	server.Use(otelecho.Middleware("my-server"))
 	server.GET("/docs/*", echoSwagger.WrapHandler)
 	server.GET("/ping", func(c echo.Context) error {
-		return c.String(http.StatusOK, "PONG\n")
+		return c.String(http.StatusOK, "pong\n")
 	})
 
 	api := server.Group("/api")
