@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
 
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
@@ -12,13 +15,20 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
+var notificationMockServer *httptest.Server
+
 type notificationService struct {
 	clientHttp clienthttp.HTTPClient
 }
 
 func NewNotificationService(baseURL string) gateway.NotificationService {
+	c := clienthttp.NewHTTPClient(baseURL)
+	if os.Getenv("USE_MOCK_SERVER") == "true" {
+		c = clienthttp.NewHTTPClient(notificationMockServer.URL)
+	}
+
 	return &notificationService{
-		clientHttp: clienthttp.NewHTTPClient(baseURL),
+		clientHttp: c,
 	}
 }
 
@@ -57,4 +67,12 @@ func (s *notificationService) Notify(ctx context.Context, account entity.Account
 	}
 
 	return nil
+}
+
+func init() {
+	notificationMockServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(json.RawMessage(`{"message": "Autorizado"}`))
+	}))
 }

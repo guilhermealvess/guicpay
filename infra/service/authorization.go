@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
 
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
@@ -12,13 +15,20 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
+var authorizationMockService *httptest.Server
+
 type authorizationService struct {
 	client clienthttp.HTTPClient
 }
 
 func NewAuthorizationService(baseURL string) gateway.AuthorizationService {
+	c := clienthttp.NewHTTPClient(baseURL)
+	if os.Getenv("USE_MOCK_SERVER") == "true" {
+		c = clienthttp.NewHTTPClient(authorizationMockService.URL)
+	}
+
 	return &authorizationService{
-		client: clienthttp.NewHTTPClient(baseURL),
+		client: c,
 	}
 }
 
@@ -51,4 +61,12 @@ func (s *authorizationService) Authorize(ctx context.Context, account entity.Acc
 	}
 
 	return nil
+}
+
+func init() {
+	authorizationMockService = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(json.RawMessage(`{"message": true}`))
+	}))
 }
