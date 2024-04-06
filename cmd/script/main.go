@@ -27,7 +27,7 @@ func main() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	baseURL := os.Getenv("API_URL")
 	if baseURL == "" {
-		baseURL = "http://localhost:8080/api"
+		baseURL = "https://backend.guicpay.tech/api"
 	}
 
 	p := &processor{
@@ -58,7 +58,7 @@ func main() {
 		go p.Transfer(it.Account, *it.Previous)
 	}
 
-	time.Sleep(time.Minute / 2)
+	time.Sleep(time.Minute * 2)
 }
 
 type Account struct {

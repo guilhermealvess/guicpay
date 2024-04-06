@@ -12,6 +12,7 @@ import (
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
 	clienthttp "github.com/guilhermealvess/guicpay/internal/client_http"
+	"github.com/guilhermealvess/guicpay/internal/logger"
 	"go.opentelemetry.io/otel"
 )
 
@@ -74,5 +75,7 @@ func init() {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(json.RawMessage(`{"message": "Autorizado"}`))
+
+		logger.Logger.Info("Notification mock server")
 	}))
 }
