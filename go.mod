@@ -22,6 +22,7 @@ require (
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/zipkin v1.24.0
 	go.opentelemetry.io/otel/sdk v1.24.0
+	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0

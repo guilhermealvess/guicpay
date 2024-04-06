@@ -14,6 +14,7 @@ import (
 	"github.com/guilhermealvess/guicpay/internal/database"
 	"github.com/guilhermealvess/guicpay/internal/properties"
 	"github.com/labstack/echo/v4/middleware"
+	_ "go.uber.org/automaxprocs"
 )
 
 func main() {
