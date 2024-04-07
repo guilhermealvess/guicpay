@@ -29,15 +29,12 @@ func NewServer(h *accountHandler) *echo.Echo {
 		return c.String(http.StatusOK, "pong\n")
 	})
 
-	api := server.Group("/api")
-	api.POST("/accounts", h.CreateAccount)
-	api.GET("/accounts", h.List, validateTokenMiddleware)
-	api.GET("/accounts/me", h.Fetch, validateTokenMiddleware)
-
-	api.POST("/transactions/deposit", h.AccountDeposit, validateTokenMiddleware)
-	api.POST("/transactions/transfer", h.AccountTransfer, validateTokenMiddleware)
-
-	api.POST("/auth", h.Auth)
+	server.POST("/accounts", h.CreateAccount)
+	server.GET("/accounts", h.List, validateTokenMiddleware)
+	server.GET("/accounts/me", h.Fetch, validateTokenMiddleware)
+	server.POST("/transactions/deposit", h.AccountDeposit, validateTokenMiddleware)
+	server.POST("/transactions/transfer", h.AccountTransfer, validateTokenMiddleware)
+	server.POST("/auth", h.Auth)
 
 	return server
 }

@@ -27,7 +27,7 @@ func main() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	baseURL := os.Getenv("API_URL")
 	if baseURL == "" {
-		baseURL = "https://backend.guicpay.tech/api"
+		baseURL = "https://backend.guicpay.tech"
 	}
 
 	p := &processor{
