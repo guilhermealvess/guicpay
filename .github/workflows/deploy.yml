@@ -33,4 +33,4 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo docker service update --image guilhermeasilva/guicpay:latest application_api
+            sudo docker service update --image guilhermeasilva/guicpay:latest app_api
