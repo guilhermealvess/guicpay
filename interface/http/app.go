@@ -28,7 +28,7 @@ func NewServer(h *accountHandler) *echo.Echo {
 	server.Use(otelecho.Middleware("my-server"))
 	server.GET("/docs/*", echoSwagger.WrapHandler)
 	server.GET("/ping", func(c echo.Context) error {
-		return c.String(http.StatusOK, fmt.Sprintf("pong %s", time.Now().UTC().String()))
+		return c.String(http.StatusOK, fmt.Sprintf("PONG %s", time.Now().UTC().String()))
 	})
 
 	server.POST("/accounts", h.CreateAccount)
