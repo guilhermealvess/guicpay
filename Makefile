@@ -18,3 +18,7 @@ ping:
 
 gen-proto:
 	- protoc --go_out=. --go-grpc_out=. pkg/pb/*.proto
+
+docker-push:
+	- docker build -t guilhermeasilva/guicpay:latest .
+	- docker push guilhermeasilva/guicpay:latest

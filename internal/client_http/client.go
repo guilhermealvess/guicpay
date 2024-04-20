@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -91,11 +90,11 @@ func (r *Response) Bind(v interface{}) error {
 
 func (r *Response) Error() error {
 	if r.Response.StatusCode >= 400 && r.Response.StatusCode < 500 {
-		return errors.New("client error")
+		return fmt.Errorf("%d ClientError", r.Response.StatusCode)
 	}
 
 	if r.Response.StatusCode >= 500 {
-		return errors.New("server error")
+		return fmt.Errorf("%d ServerError", r.Response.StatusCode)
 	}
 
 	return nil

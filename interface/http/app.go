@@ -1,8 +1,10 @@
 package http
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	_ "github.com/guilhermealvess/guicpay/docs"
 	"github.com/guilhermealvess/guicpay/internal/properties"
@@ -26,7 +28,7 @@ func NewServer(h *accountHandler) *echo.Echo {
 	server.Use(otelecho.Middleware("my-server"))
 	server.GET("/docs/*", echoSwagger.WrapHandler)
 	server.GET("/ping", func(c echo.Context) error {
-		return c.String(http.StatusOK, "pong\n")
+		return c.String(http.StatusOK, fmt.Sprintf("pong %s", time.Now().UTC().String()))
 	})
 
 	server.POST("/accounts", h.CreateAccount)

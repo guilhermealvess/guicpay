@@ -27,7 +27,7 @@ func main() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	baseURL := os.Getenv("API_URL")
 	if baseURL == "" {
-		baseURL = "https://backend.guicpay.tech"
+		baseURL = "https://api.guicpay.tech"
 	}
 
 	p := &processor{
@@ -106,6 +106,10 @@ func (p *processor) CreateAccount() (*Account, error) {
 	res, err := p.client.Request(context.Background(), http.MethodPost, "/accounts", clienthttp.WithPayload(payload), clienthttp.WithUserAgent("guicpay-script"))
 	if err != nil {
 		return nil, err
+	}
+
+	if err := res.Error(); err != nil {
+		return nil, fmt.Errorf(`[%w] body: "%s"`, err, res.Content)
 	}
 
 	requestID := res.Response.Header.Get("X-Request-ID")
