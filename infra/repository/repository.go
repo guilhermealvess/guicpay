@@ -131,6 +131,7 @@ func (r *accountRepository) SaveAtomicTransactions(ctx context.Context, transact
 				TransactionType: string(transaction.TransactionType),
 				Timestamp:       transaction.Timestamp,
 				Amount:          int64(transaction.Amount),
+				ParentID:        transaction.ParentID,
 			})
 		}(t)
 	}

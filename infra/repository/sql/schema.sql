@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction_type VARCHAR(50) NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL,
     amount BIGINT NOT NULL,
-    snapshot_id UUID REFERENCES transactions(id)
+    snapshot_id UUID REFERENCES transactions(id),
+    parent_id UUID REFERENCES transactions(id),
+    CONSTRAINT uq_account_id_parent_id UNIQUE(account_id, parent_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_account_email ON accounts(email);

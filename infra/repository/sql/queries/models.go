@@ -27,6 +27,7 @@ type Transaction struct {
 	TransactionType string        `db:"transaction_type" json:"transaction_type"`
 	Amount          int64         `db:"amount" json:"amount"`
 	SnapshotID      uuid.NullUUID `db:"snapshot_id" json:"snapshot_id"`
+	ParentID        uuid.UUID     `db:"parent_id" json:"parent_id"`
 }
 
 type ResumeAccount struct {

@@ -21,18 +21,6 @@ func (u *accountUseCase) ExecuteSnapshotTransaction(ctx context.Context, account
 	}
 
 	ctx = gateway.InjectTransaction(ctx, tx)
-	if err := u.mutex.Lock(ctx, accountID.String(), properties.Props.TransactionTimeout); err != nil {
-		logger.Logger.Error("Error in mutex lock", zap.Error(err))
-		return
-	}
-
-	defer func() {
-		if err := u.mutex.Unlock(ctx, accountID.String()); err != nil {
-			logger.Logger.Error("Error in rollback", zap.Error(err))
-			tx.Rollback()
-		}
-	}()
-
 	account, err := u.repository.FindAccount(ctx, accountID)
 	if err != nil {
 		logger.Logger.Error("Error in find account", zap.Error(err))

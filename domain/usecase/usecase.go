@@ -22,16 +22,14 @@ type accountUseCase struct {
 	repository   gateway.AccountRepository
 	authorizer   gateway.AuthorizationService
 	notification gateway.NotificationService
-	mutex        gateway.Mutex
 	queue        chan uuid.UUID
 }
 
-func NewAccountUseCase(r gateway.AccountRepository, m gateway.Mutex, n gateway.NotificationService, a gateway.AuthorizationService, ch chan uuid.UUID) AccountUseCase {
+func NewAccountUseCase(r gateway.AccountRepository, n gateway.NotificationService, a gateway.AuthorizationService, ch chan uuid.UUID) AccountUseCase {
 	return &accountUseCase{
 		repository:   r,
 		authorizer:   a,
 		notification: n,
-		mutex:        m,
 		queue:        ch,
 	}
 }

@@ -92,12 +92,13 @@ type SaveTransactionParams struct {
 	Timestamp       time.Time     `db:"timestamp" json:"timestamp"`
 	Amount          int64         `db:"amount" json:"amount"`
 	SnapshotID      uuid.NullUUID `db:"snapshot_id" json:"snapshot_id"`
+	ParentID        uuid.NullUUID `db:"parent_id" json:"parent_id"`
 }
 
 func (q *Queries) SaveTransaction(ctx context.Context, params SaveTransactionParams) error {
-	const query = `INSERT INTO transactions (id,correlated_id,account_id,transaction_type,timestamp,amount,snapshot_id)
-	VALUES ($1,$2,$3,$4,$5,$6,$7)`
-	_, err := q.db.ExecContext(ctx, query, params.ID, params.CorrelatedID, params.AccountID, params.TransactionType, params.Timestamp, params.Amount, params.SnapshotID)
+	const query = `INSERT INTO transactions (id,correlated_id,account_id,transaction_type,timestamp,amount,snapshot_id,parent_id)
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
+	_, err := q.db.ExecContext(ctx, query, params.ID, params.CorrelatedID, params.AccountID, params.TransactionType, params.Timestamp, params.Amount, params.SnapshotID, params.ParentID)
 	return err
 }
 

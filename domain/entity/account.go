@@ -77,7 +77,7 @@ func (a *Account) Transfer(payee *Account, v Money) (*TransferOutput, error) {
 		return nil, errors.Join(ErrUnprocessableEntity, NewTransferError("insuficient balance", a.ID, v))
 	}
 
-	t1, t2 := factoryTransferTransactions(*a, *payee, v)
+	t1, t2 := factoryTransferTransactions(*a, *payee, v, a.Wallet.FindParent())
 	a.Wallet = append(a.Wallet, &t1)
 	payee.Wallet = append(payee.Wallet, &t2)
 

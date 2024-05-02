@@ -6,10 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/guilhermealvess/guicpay/domain/entity"
 	"github.com/guilhermealvess/guicpay/domain/gateway"
-	"github.com/guilhermealvess/guicpay/internal/logger"
 	"github.com/guilhermealvess/guicpay/internal/properties"
 	"go.opentelemetry.io/otel"
-	"go.uber.org/zap"
 )
 
 func (u *accountUseCase) ExecuteTransfer(ctx context.Context, payer, payee uuid.UUID, value uint64) (uuid.UUID, error) {
@@ -26,17 +24,6 @@ func (u *accountUseCase) ExecuteTransfer(ctx context.Context, payer, payee uuid.
 
 	defer tx.Commit()
 	ctx = gateway.InjectTransaction(ctx, tx)
-	if err := u.mutex.Lock(ctx, payer.String(), properties.Props.TransactionTimeout); err != nil {
-		return uuid.Nil, err
-	}
-
-	defer func() {
-		if err := u.mutex.Unlock(ctx, payer.String()); err != nil {
-			tx.Rollback()
-			logger.Logger.Warn("Error in unlock payer account", zap.String("account_id", payer.String()))
-		}
-	}()
-
 	accounts, err := u.repository.FindAccountByIDs(ctx, payer, payee)
 	if err != nil {
 		return uuid.Nil, err

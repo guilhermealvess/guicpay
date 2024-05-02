@@ -23,21 +23,22 @@ type Transaction struct {
 	Timestamp       time.Time
 	Amount          Money
 	SnapshotID      uuid.NullUUID
+	ParentID        uuid.NullUUID
 }
 
 func factoryDepositTransaction(account Account, v Money) Transaction {
-	t := Transaction{
-		ID:              uuid.New(),
+	transactionID := uuid.New()
+	return Transaction{
+		ID:              transactionID,
 		AccountID:       account.ID,
 		TransactionType: Deposit,
 		Timestamp:       time.Now().UTC(),
 		Amount:          v.Absolute(),
+		ParentID:        uuid.NullUUID{Valid: true, UUID: transactionID},
 	}
-
-	return t
 }
 
-func factoryTransferTransactions(payerAccount, payeeAccount Account, v Money) (payer Transaction, payee Transaction) {
+func factoryTransferTransactions(payerAccount, payeeAccount Account, v Money, parent *Transaction) (payer Transaction, payee Transaction) {
 	now := time.Now().UTC()
 	correlatedID := uuid.New()
 	payer = Transaction{
@@ -47,15 +48,22 @@ func factoryTransferTransactions(payerAccount, payeeAccount Account, v Money) (p
 		TransactionType: TransferPayer,
 		Timestamp:       now,
 		Amount:          -1 * v.Absolute(),
+		ParentID:        uuid.NullUUID{},
 	}
 
+	if parent != nil {
+		payer.ParentID = uuid.NullUUID{Valid: true, UUID: parent.ID}
+	}
+
+	transactionPayeeID := uuid.New()
 	payee = Transaction{
-		ID:              uuid.New(),
+		ID:              transactionPayeeID,
 		CorrelatedID:    uuid.NullUUID{UUID: correlatedID, Valid: true},
 		AccountID:       payeeAccount.ID,
 		TransactionType: TransferPayee,
 		Timestamp:       now,
 		Amount:          v.Absolute(),
+		ParentID:        uuid.NullUUID{Valid: true, UUID: transactionPayeeID},
 	}
 
 	return
@@ -81,7 +89,7 @@ func (w *Wallet) Snapshot(accountID uuid.UUID) *Transaction {
 		t.SnapshotID = uuid.NullUUID{UUID: snapshotID, Valid: true}
 	}
 
-	return &Transaction{
+	t := &Transaction{
 		ID:              snapshotID,
 		AccountID:       accountID,
 		TransactionType: Snapshot,
@@ -89,5 +97,32 @@ func (w *Wallet) Snapshot(accountID uuid.UUID) *Transaction {
 		Amount:          balance,
 		SnapshotID:      uuid.NullUUID{},
 		CorrelatedID:    uuid.NullUUID{},
+		ParentID:        uuid.NullUUID{},
 	}
+
+	if parent := w.FindParent(); parent != nil {
+		t.ParentID = uuid.NullUUID{Valid: true, UUID: parent.ID}
+	}
+
+	return t
+}
+
+func (w *Wallet) FindParent() *Transaction {
+	transactions := make([]Transaction, 0)
+	m := make(map[uuid.UUID]bool)
+
+	for _, t := range *w {
+		if t.Amount < 0 {
+			transactions = append(transactions, *t)
+			m[t.ParentID.UUID] = true
+		}
+	}
+
+	for _, t := range transactions {
+		if _, ok := m[t.ID]; !ok {
+			return &t
+		}
+	}
+
+	return nil
 }

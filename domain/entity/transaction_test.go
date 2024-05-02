@@ -24,7 +24,7 @@ func TestTransaction(t *testing.T) {
 
 	t.Run("Deposit", func(t *testing.T) {
 		transaction := factoryDepositTransaction(personal, value)
-	
+
 		assert.NotEqual(t, uuid.Nil, transaction.ID)
 		assert.Equal(t, personal.ID, transaction.AccountID)
 		assert.False(t, transaction.CorrelatedID.Valid)
@@ -33,7 +33,7 @@ func TestTransaction(t *testing.T) {
 	})
 
 	t.Run("Transfer", func(t *testing.T) {
-		payerTransaction, payeeTransaction := factoryTransferTransactions(personal, seller, value)
+		payerTransaction, payeeTransaction := factoryTransferTransactions(personal, seller, value, nil)
 
 		assert.NotEqual(t, uuid.Nil, payerTransaction.CorrelatedID.UUID)
 		assert.Equal(t, payerTransaction.CorrelatedID, payeeTransaction.CorrelatedID)
